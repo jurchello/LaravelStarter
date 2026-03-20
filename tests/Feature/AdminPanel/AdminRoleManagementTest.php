@@ -8,25 +8,30 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Tests\Concerns\DisablesCsrfForWebMutations;
 use Tests\TestCase;
 
 final class AdminRoleManagementTest extends TestCase
 {
+    use DisablesCsrfForWebMutations;
     use RefreshDatabase;
 
-    public function test_admin_roles_page_renders_shell_only(): void
+    public function test_admin_roles_page_renders_server_side_initial_state(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
+        $role = Role::create(['name' => 'Manager']);
 
         $response = $this->actingAs($admin)->get('/management/roles');
 
         $response->assertOk()
             ->assertViewIs('admin-panel.roles.index')
             ->assertSee('data-admin-page="roles"', false)
+            ->assertSee('data-page-state="ready"', false)
             ->assertSee('data-roles-endpoint="/management/api/roles"', false)
             ->assertSee('data-roles-suggestions-endpoint="/management/api/roles/suggestions"', false)
             ->assertSee('data-roles-permission-update-base=', false)
-            ->assertDontSee('roles-table-row');
+            ->assertSee('roles-table-row', false)
+            ->assertSee($role->name);
     }
 
     public function test_admin_roles_api_returns_paginated_envelope(): void

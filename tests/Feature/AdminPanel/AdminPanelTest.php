@@ -9,10 +9,12 @@ use App\Models\AbTest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
+use Tests\Concerns\DisablesCsrfForWebMutations;
 use Tests\TestCase;
 
 final class AdminPanelTest extends TestCase
 {
+    use DisablesCsrfForWebMutations;
     use RefreshDatabase;
 
     public function test_guest_gets_404(): void
@@ -40,32 +42,46 @@ final class AdminPanelTest extends TestCase
         $response->assertNotFound();
     }
 
-    public function test_admin_dashboard_page_renders_shell_only(): void
+    public function test_admin_dashboard_page_renders_server_side_initial_state(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
+        User::factory()->count(2)->create();
 
         $response = $this->actingAs($admin)->get('/management');
 
         $response->assertOk()
             ->assertViewIs('admin-panel.dashboard')
             ->assertSee('data-admin-page="dashboard"', false)
-            ->assertSee('data-dashboard-endpoint="/management/api/dashboard"', false);
+            ->assertSee('data-page-state="ready"', false)
+            ->assertSee('data-dashboard-endpoint="/management/api/dashboard"', false)
+            ->assertSee('Total users')
+            ->assertSee('Verified users')
+            ->assertSee('Admins')
+            ->assertSee('New this week');
     }
 
-    public function test_admin_users_page_renders_shell_only(): void
+    public function test_admin_users_page_renders_server_side_initial_state(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->create([
+            'is_admin' => false,
+            'name' => 'Alice Example',
+            'email' => 'alice@example.com',
+        ]);
 
         $response = $this->actingAs($admin)->get('/management/users');
 
         $response->assertOk()
             ->assertViewIs('admin-panel.users.index')
             ->assertSee('data-admin-page="users"', false)
+            ->assertSee('data-page-state="ready"', false)
             ->assertSee('data-users-endpoint="/management/api/users"', false)
             ->assertSee('data-users-suggestions-endpoint="/management/api/users/suggestions"', false)
             ->assertSee('data-users-impersonate-base=', false)
             ->assertSee('data-users-filter-section', false)
-            ->assertDontSee('users-table-row');
+            ->assertSee('users-table-row', false)
+            ->assertSee($user->name)
+            ->assertSee($user->email);
     }
 
     public function test_admin_roles_page_link_is_present_in_sidebar(): void
@@ -147,17 +163,27 @@ final class AdminPanelTest extends TestCase
             ->assertSee('href="'.route('docs.admin.ui').'"', false);
     }
 
-    public function test_admin_ab_tests_page_renders_shell_only(): void
+    public function test_admin_ab_tests_page_renders_server_side_initial_state(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
+        $test = AbTest::factory()->create([
+            'name' => 'Homepage Hero',
+            'slug' => 'homepage-hero',
+            'status' => AbTestStatus::Draft,
+            'traffic_percent' => 75,
+        ]);
 
         $response = $this->actingAs($admin)->get('/management/ab-tests');
 
         $response->assertOk()
             ->assertViewIs('admin-panel.ab-tests.index')
             ->assertSee('data-admin-page="ab-tests"', false)
+            ->assertSee('data-page-state="ready"', false)
             ->assertSee('data-ab-tests-endpoint="/management/api/ab-tests"', false)
-            ->assertSee('data-ab-tests-suggestions-endpoint="/management/api/ab-tests/suggestions"', false);
+            ->assertSee('data-ab-tests-suggestions-endpoint="/management/api/ab-tests/suggestions"', false)
+            ->assertSee('ab-tests-table-row', false)
+            ->assertSee($test->name)
+            ->assertSee($test->slug);
     }
 
     public function test_admin_dashboard_api_returns_envelope(): void
@@ -192,7 +218,8 @@ final class AdminPanelTest extends TestCase
                     'items' => [
                         ['id', 'name', 'email', 'isAdmin', 'isSuperadmin', 'roles', 'registeredAt'],
                     ],
-                    'availableRoles',
+                    'roleFilters',
+                    'assignableRoles',
                 ],
                 'meta' => ['page', 'perPage', 'total', 'totalPages'],
                 'errors',

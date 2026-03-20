@@ -1,14 +1,21 @@
 @extends('admin-panel.layouts.admin')
 
+@php
+    $hasTests = count($tests->items) > 0;
+    $pageState = $hasTests ? 'ready' : 'empty';
+@endphp
+
 @section('content')
     <x-admin.page
         class="admin-page"
         data-admin-page="ab-tests"
+        data-page-state="{{ $pageState }}"
+        aria-busy="false"
         data-ab-tests-endpoint="{{ route('admin.api.ab-tests.index', absolute: false) }}"
         data-ab-tests-suggestions-endpoint="{{ route('admin.api.ab-tests.suggestions', absolute: false) }}"
         data-ab-tests-base-route="{{ route('admin.ab-tests.index', absolute: false) }}"
-        data-ab-tests-sort="{{ request('sort', 'name') }}"
-        data-ab-tests-direction="{{ request('direction', 'asc') }}"
+        data-ab-tests-sort="{{ $query->sortBy }}"
+        data-ab-tests-direction="{{ $query->direction }}"
         data-testid="admin-ab-tests-page"
     >
         <x-admin.page-header
@@ -24,7 +31,7 @@
                     id="ab-tests-search"
                     name="search"
                     placeholder="Search by name or slug"
-                    :value="request('search')"
+                    :value="$query->search"
                     list-id="ab-tests-search-suggestions"
                     autocomplete="off"
                 >
@@ -37,18 +44,18 @@
                     aria-label="Filter by status"
                     data-ab-tests-status-filter
                 >
-                    <option value="all" @selected(request('status', 'all') === 'all')>All statuses</option>
-                    <option value="draft" @selected(request('status') === 'draft')>Draft</option>
-                    <option value="active" @selected(request('status') === 'active')>Active</option>
-                    <option value="paused" @selected(request('status') === 'paused')>Paused</option>
-                    <option value="finished" @selected(request('status') === 'finished')>Finished</option>
+                    <option value="all" @selected($query->status === 'all')>All statuses</option>
+                    <option value="draft" @selected($query->status === 'draft')>Draft</option>
+                    <option value="active" @selected($query->status === 'active')>Active</option>
+                    <option value="paused" @selected($query->status === 'paused')>Paused</option>
+                    <option value="finished" @selected($query->status === 'finished')>Finished</option>
                 </x-admin.select>
             </x-admin.table-filters>
         </x-admin.filter-section>
 
         <x-admin.surface padded>
             <x-admin.toolbar title="All Tests">
-                <span data-ab-tests-summary data-testid="ab-tests-summary"></span>
+                <span data-ab-tests-summary data-testid="ab-tests-summary">{{ $tests->total }} total tests</span>
             </x-admin.toolbar>
 
             <x-admin.table data-testid="ab-tests-table">
@@ -58,8 +65,8 @@
                             <x-admin.sort-button
                                 data-ab-tests-sort-trigger
                                 sort-key="name"
-                                :active="request('sort', 'name') === 'name'"
-                                :direction="request('sort', 'name') === 'name' ? request('direction', 'asc') : null"
+                                :active="$query->sortBy === 'name'"
+                                :direction="$query->sortBy === 'name' ? $query->direction : null"
                             >
                                 Name
                             </x-admin.sort-button>
@@ -68,8 +75,8 @@
                             <x-admin.sort-button
                                 data-ab-tests-sort-trigger
                                 sort-key="slug"
-                                :active="request('sort') === 'slug'"
-                                :direction="request('sort') === 'slug' ? request('direction') : null"
+                                :active="$query->sortBy === 'slug'"
+                                :direction="$query->sortBy === 'slug' ? $query->direction : null"
                             >
                                 Slug
                             </x-admin.sort-button>
@@ -78,8 +85,8 @@
                             <x-admin.sort-button
                                 data-ab-tests-sort-trigger
                                 sort-key="status"
-                                :active="request('sort') === 'status'"
-                                :direction="request('sort') === 'status' ? request('direction') : null"
+                                :active="$query->sortBy === 'status'"
+                                :direction="$query->sortBy === 'status' ? $query->direction : null"
                             >
                                 Status
                             </x-admin.sort-button>
@@ -88,8 +95,8 @@
                             <x-admin.sort-button
                                 data-ab-tests-sort-trigger
                                 sort-key="trafficPercent"
-                                :active="request('sort') === 'trafficPercent'"
-                                :direction="request('sort') === 'trafficPercent' ? request('direction') : null"
+                                :active="$query->sortBy === 'trafficPercent'"
+                                :direction="$query->sortBy === 'trafficPercent' ? $query->direction : null"
                             >
                                 Traffic
                             </x-admin.sort-button>
@@ -98,8 +105,8 @@
                             <x-admin.sort-button
                                 data-ab-tests-sort-trigger
                                 sort-key="variantsCount"
-                                :active="request('sort') === 'variantsCount'"
-                                :direction="request('sort') === 'variantsCount' ? request('direction') : null"
+                                :active="$query->sortBy === 'variantsCount'"
+                                :direction="$query->sortBy === 'variantsCount' ? $query->direction : null"
                             >
                                 Variants
                             </x-admin.sort-button>
@@ -107,18 +114,25 @@
                         <th></th>
                     </tr>
                 </thead>
-                <tbody data-ab-tests-table-body></tbody>
+                <tbody data-ab-tests-table-body>
+                    @include('admin-panel.ab-tests.partials.rows', ['tests' => $tests->items])
+                </tbody>
             </x-admin.table>
 
             <x-admin.empty-state
-                class="is-hidden"
+                class="{{ $hasTests ? 'is-hidden' : '' }}"
                 title="No AB tests found"
                 description="The current filters returned no experiments."
                 data-ab-tests-empty
                 data-testid="ab-tests-empty"
             />
 
-            <x-admin.pagination data-ab-tests-pagination data-testid="ab-tests-pagination" />
+            <x-admin.pagination data-ab-tests-pagination data-testid="ab-tests-pagination">
+                @include('admin-panel.ab-tests.partials.pagination', [
+                    'currentPage' => $tests->currentPage,
+                    'totalPages' => $totalPages,
+                ])
+            </x-admin.pagination>
         </x-admin.surface>
     </x-admin.page>
 @endsection

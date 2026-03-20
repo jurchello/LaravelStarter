@@ -14,6 +14,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\AdminPanel\AdminUserResource;
 use App\Http\Resources\Api\PaginationMetaResource;
 use App\Models\User;
+use App\Support\AdminPanel\UserRoleFilterOptions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -42,14 +43,14 @@ final class AdminUsersApiController extends Controller
         return $this->respond(
             data: [
                 'items' => AdminUserResource::collection($result->items),
-                'availableRoles' => array_merge(['Superadmin'], $this->roles->allNames()),
+                'roleFilters' => UserRoleFilterOptions::build($this->roles->allNames()),
                 'assignableRoles' => $this->roles->allNames(),
             ],
             meta: new PaginationMetaResource([
                 'page' => $result->currentPage,
                 'perPage' => $result->perPage,
                 'total' => $result->total,
-                'totalPages' => (int) ceil($result->total / max(1, $result->perPage)),
+                'totalPages' => max(1, (int) ceil($result->total / max(1, $result->perPage))),
             ]),
         );
     }

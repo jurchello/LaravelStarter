@@ -8,10 +8,12 @@ use App\Domain\User\Repositories\UserRepository;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
+use Tests\Concerns\DisablesCsrfForWebMutations;
 use Tests\TestCase;
 
 final class AdminApiExceptionHandlingTest extends TestCase
 {
+    use DisablesCsrfForWebMutations;
     use RefreshDatabase;
 
     public function test_admin_api_validation_errors_use_envelope_contract(): void

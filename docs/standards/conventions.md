@@ -16,6 +16,7 @@ Only add a code comment when one of these is true:
 - DTOs for domain/application payloads live in `app/Domain/{Context}/Dto` and use `Dto` or `Data` suffixes
 - HTTP input stays in controllers or FormRequests — no raw `$request->all()` in actions or services
 - JSON API responses must be serialized through `app/Http/Resources/...`, not built inline with `response()->json([...])`
+- One controller action must have one transport contract. Do not return `view()` for one request shape and JSON for another from the same action.
 - API exception mapping must stay centralized. Keep `bootstrap/app.php` thin and place request classification and exception-to-response logic in dedicated HTTP support classes.
 - PHPStan level 5 — do not lower without a strong reason
 - `declare(strict_types=1)` in every PHP file
@@ -28,7 +29,7 @@ Only add a code comment when one of these is true:
 - Files in `resources/js/`
 - `service.ts` is the only place allowed to call shared HTTP clients
 - DOM wiring belongs in page `connect.ts` or `bootstrap.ts`, never in `service.ts`
-- All interactive elements must have `data-testid` for Playwright (format: `{context}-{element}-{action}`)
+- All interactive elements must have stable `data-testid` hooks (format: `{context}-{element}-{action}`)
 - See `docs/standards/testing-standards.md` for full frontend testing conventions
 
 ## Naming
@@ -69,6 +70,7 @@ Only add a code comment when one of these is true:
 - JSON or other non-executable payload islands must use neutral HTML containers with `data-*` attributes instead of `<script>` tags.
 - Scripts must be loaded through Vite entrypoints and TypeScript modules.
 - Styles must live in managed asset files, either shared surface layers or explicit feature-scoped files.
+- Blade should render the initial meaningful page state when the server already has the data needed for first paint.
 
 ## Feedback UX
 
@@ -157,7 +159,7 @@ Formatting is automated. Manual code formatting is forbidden.
 
 ## Authentication
 
-- The admin surface is session-authenticated and API-driven: HTML is shell-only, `/management/api/*` is fetched through `webClient`, and CSRF/session auth stays on the `web` middleware stack.
+- The admin surface is session-authenticated and API-backed: HTML and `/management/api/*` both stay on the `web` middleware stack, `/management/api/*` is fetched through `webClient`, and CSRF/session auth stays enabled.
 - Optional social sign-in on the site surface must also terminate in the normal session-authenticated `User` model. Do not introduce a parallel token-only identity flow for Google or other OAuth providers.
 - `apiClient` exists for token-authenticated APIs when a bearer-token surface is added. It must not be used by the current admin panel.
 - Public routes such as `GET /api/i18n` stay outside auth middleware.

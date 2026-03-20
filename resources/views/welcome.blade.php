@@ -3,7 +3,12 @@
 @section('title', config('app.name'))
 
 @section('content')
-    <x-site.page class="row g-4">
+    <x-site.page
+        class="row g-4"
+        data-site-page="welcome"
+        data-page-state="ready"
+        data-testid="site-welcome-page"
+    >
         <div class="col-lg-7">
         <x-site.card padded>
             <p class="text-uppercase small fw-semibold text-body-secondary mb-2">Template baseline</p>

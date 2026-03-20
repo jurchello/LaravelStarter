@@ -15,7 +15,7 @@ Included out of the box:
 - site and admin API endpoints with generated API documentation / Swagger
 - Docker-based local stack with Nginx, PHP-FPM, MariaDB, Redis, Mailpit, queues, and Vite
 - GitHub Actions CI for backend and frontend quality checks on push and pull request
-- backend, frontend, architecture, and e2e tests
+- backend, frontend, and architecture tests
 - DDD-oriented structure, project docs, standards, and generator stubs for future modules
 
 ## Start
@@ -81,7 +81,6 @@ Important:
 - The default super-admin seed is skipped automatically in `production`.
 - Default roles are still seeded in every environment when `DatabaseSeeder` runs.
 - If you need a production admin, create it explicitly through a project-specific process instead of `DatabaseSeeder`.
-- `PlaywrightTestSeeder` is test-only and must not be used as an environment bootstrapper.
 - Rate limiting is configured centrally in [config/rate_limits.php](/home/yurii/projects/LaravelStarter/config/rate_limits.php) and can be overridden with env values.
 - `LOG_STACK=daily` is the default and both `daily` and `single` channels use JSON formatting.
 - `scripts/deploy.sh` runs `php artisan permissions:sync --force` during deploy.
@@ -140,7 +139,6 @@ npm test
 npm run test:backend
 npm run test:php
 npm run test:unit
-npm run test:e2e
 ```
 
 Useful focused runs:

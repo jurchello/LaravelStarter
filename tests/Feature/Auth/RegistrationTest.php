@@ -32,7 +32,10 @@ final class RegistrationTest extends TestCase
     {
         $response = $this->get(route('register'));
 
-        $response->assertOk();
+        $response->assertOk()
+            ->assertSee('data-site-page="register"', false)
+            ->assertSee('data-page-state="ready"', false)
+            ->assertSee('data-testid="site-register-page"', false);
     }
 
     public function test_new_users_can_register(): void

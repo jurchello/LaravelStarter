@@ -3,7 +3,12 @@
 @section('title', 'Dashboard')
 
 @section('content')
-    <x-site.page class="row g-4">
+    <x-site.page
+        class="row g-4"
+        data-site-page="dashboard"
+        data-page-state="ready"
+        data-testid="site-dashboard-page"
+    >
         <div class="col-lg-7">
         <x-site.card padded>
             <p class="text-uppercase small fw-semibold text-body-secondary mb-2">Dashboard</p>

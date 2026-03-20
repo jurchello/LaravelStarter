@@ -1,16 +1,34 @@
 import {
-    type AdminUsersQueryState,
-    AdminUsersService,
     type AdminUserRecord,
+    type AdminUserRoleFilterOption,
+    type AdminUsersQueryState,
+    type AdminUsersResult,
     type AdminUsersSortDirection,
     type AdminUsersSortKey,
+    AdminUsersService,
 } from '@/modules/admin-users/service'
 import { emitNotify } from '@/modules/toast/service'
+import {
+    connectPageModules,
+    definePageModule,
+} from '@/pages/module-connect'
+import {
+    setPageEmpty,
+    setPageError,
+    setPageLoading,
+    setPageReady,
+} from '@/shared/runtime-state/module'
 
 const service = new AdminUsersService()
 const SEARCH_DEBOUNCE_MS = 250
 
-export async function initAdminUsersPage(root: HTMLElement): Promise<void> {
+export function connectAdminUsersPage(root: HTMLElement): Promise<void> {
+    return connectPageModules([
+        definePageModule('admin-users', () => bootstrapAdminUsersPage(root)),
+    ])
+}
+
+async function bootstrapAdminUsersPage(root: HTMLElement): Promise<void> {
     const endpoint = root.dataset.usersEndpoint
     const suggestionsEndpoint = root.dataset.usersSuggestionsEndpoint
     const impersonateBase = root.dataset.usersImpersonateBase
@@ -58,44 +76,96 @@ export async function initAdminUsersPage(root: HTMLElement): Promise<void> {
     let currentItems: AdminUserRecord[] = []
     let assignableRoles: string[] = []
 
-    const render = async (): Promise<void> => {
+    syncSortButtons(sortButtons, state)
+    syncRootState(root, tableBody, empty)
+
+    const hydrateCurrentPageData = async (): Promise<void> => {
+        if (currentItems.length > 0 || emptyIsVisible(empty)) {
+            return
+        }
+
         const result = await service.load(endpoint, state)
+
         currentItems = result.items
         assignableRoles = result.assignableRoles
-
-        tableBody.innerHTML = result.items.map((user) => renderRow(user, impersonateBase)).join('')
-        bindImpersonationActions(tableBody, impersonateBase)
-        empty.classList.toggle('is-hidden', result.items.length > 0)
-        summary.textContent = `${result.total} total users`
-        syncRoleOptions(roleSelect, result.availableRoles, state.role)
-        pagination.innerHTML = renderPagination(result.page, result.totalPages)
-        syncSortButtons(sortButtons, state)
-        syncUrl(state)
-        bindRoleEditors(tableBody, currentItems, assignableRoles, roleModal, roleFormId, roleMultiSelect)
     }
 
-    await render()
+    const refresh = async (): Promise<void> => {
+        setPageLoading(root)
 
-    bindPagination(pagination, () => state, async (page) => {
-        state = { ...state, page }
-        await render()
-    })
+        try {
+            const result = await service.load(endpoint, state)
 
-    bindSorting(sortButtons, () => state, async (sort, direction) => {
-        state = { ...state, sort, direction, page: 1 }
-        await render()
-    })
-
-    roleSelect.addEventListener('change', async () => {
-        state = {
-            ...state,
-            role: roleSelect.value,
-            page: 1,
+            applyUsersResult(result, {
+                root,
+                tableBody,
+                pagination,
+                summary,
+                empty,
+                roleSelect,
+                sortButtons,
+            }, state)
+            currentItems = result.items
+            assignableRoles = result.assignableRoles
+        } catch {
+            setPageError(root)
+            emitNotify({
+                type: 'error',
+                message: 'Unable to refresh users right now.',
+            })
         }
-        await render()
+    }
+
+    pagination.addEventListener('click', (event) => {
+        const target = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>('[data-page-nav]')
+
+        if (!target) {
+            return
+        }
+
+        void (async () => {
+            const currentPage = state.page
+            const direction = target.dataset.pageNav === 'next' ? 1 : -1
+
+            state = { ...state, page: Math.max(1, currentPage + direction) }
+            await refresh()
+        })()
     })
 
-    searchInput.addEventListener('input', async () => {
+    sortButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const sortKey = button.getAttribute('sort-key') as AdminUsersSortKey | null
+
+            if (!sortKey) {
+                return
+            }
+
+            void (async () => {
+                const nextDirection: AdminUsersSortDirection = state.sort === sortKey && state.direction === 'asc' ? 'desc' : 'asc'
+
+                state = {
+                    ...state,
+                    sort: sortKey,
+                    direction: nextDirection,
+                    page: 1,
+                }
+                await refresh()
+            })()
+        })
+    })
+
+    roleSelect.addEventListener('change', () => {
+        void (async () => {
+            state = {
+                ...state,
+                role: roleSelect.value,
+                page: 1,
+            }
+            await refresh()
+        })()
+    })
+
+    searchInput.addEventListener('input', () => {
         if (searchTimer) {
             window.clearTimeout(searchTimer)
         }
@@ -117,14 +187,52 @@ export async function initAdminUsersPage(root: HTMLElement): Promise<void> {
             suggestionsList.innerHTML = ''
         }
 
-        searchTimer = window.setTimeout(async () => {
+        searchTimer = window.setTimeout(() => {
             state = {
                 ...state,
                 search: query,
                 page: 1,
             }
-            await render()
+            void refresh()
         }, SEARCH_DEBOUNCE_MS)
+    })
+
+    tableBody.addEventListener('click', (event) => {
+        const target = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>('button')
+
+        if (!target) {
+            return
+        }
+
+        void (async () => {
+            const impersonateId = Number(target.dataset.userImpersonate)
+
+            if (impersonateId > 0) {
+                const redirectTo = await service.impersonate(impersonateBase, impersonateId)
+                window.location.assign(redirectTo)
+
+                return
+            }
+
+            const editAccessId = Number(target.dataset.userEditAccess)
+
+            if (editAccessId > 0) {
+                await hydrateCurrentPageData()
+
+                const user = currentItems.find((item) => item.id === editAccessId)
+
+                if (!user) {
+                    emitNotify({
+                        type: 'error',
+                        message: 'Unable to load access details for this user.',
+                    })
+
+                    return
+                }
+
+                openRoleModal(roleModal, roleFormId, roleMultiSelect, user, assignableRoles)
+            }
+        })()
     })
 
     roleCancel.addEventListener('click', () => {
@@ -139,28 +247,53 @@ export async function initAdminUsersPage(root: HTMLElement): Promise<void> {
         }
     })
 
-    roleForm.addEventListener('submit', async (event) => {
+    roleForm.addEventListener('submit', (event) => {
         event.preventDefault()
 
-        const userId = Number(roleFormId.value)
+        void (async () => {
+            const userId = Number(roleFormId.value)
 
-        if (!userId) {
-            return
-        }
+            if (!userId) {
+                return
+            }
 
-        const roles = Array.from(roleMultiSelect.selectedOptions).map((option) => option.value)
+            const roles = Array.from(roleMultiSelect.selectedOptions).map((option) => option.value)
 
-        await service.updateRoles(roleUpdateBase, userId, roles)
-        closeRoleModal(roleModal)
-        emitNotify({
-            type: 'success',
-            message: 'User access updated.',
-        })
-        await render()
+            await service.updateRoles(roleUpdateBase, userId, roles)
+            closeRoleModal(roleModal)
+            emitNotify({
+                type: 'success',
+                message: 'User access updated.',
+            })
+            await refresh()
+        })()
     })
 }
 
-function renderRow(user: AdminUserRecord, impersonateBase: string): string {
+function applyUsersResult(
+    result: AdminUsersResult,
+    elements: {
+        root: HTMLElement
+        tableBody: HTMLElement
+        pagination: HTMLElement
+        summary: HTMLElement
+        empty: HTMLElement
+        roleSelect: HTMLSelectElement
+        sortButtons: NodeListOf<HTMLButtonElement>
+    },
+    state: AdminUsersQueryState,
+): void {
+    elements.tableBody.innerHTML = result.items.map((user) => renderRow(user)).join('')
+    elements.empty.classList.toggle('is-hidden', result.items.length > 0)
+    elements.summary.textContent = `${result.total} total users`
+    elements.pagination.innerHTML = renderPagination(result.page, result.totalPages)
+    syncRoleOptions(elements.roleSelect, result.roleFilters, state.role)
+    syncSortButtons(elements.sortButtons, state)
+    syncUrl(state)
+    syncRootState(elements.root, elements.tableBody, elements.empty)
+}
+
+function renderRow(user: AdminUserRecord): string {
     const formattedDate = new Date(user.registeredAt).toLocaleDateString('en-CA')
     const accessBadges = renderAccessBadges(user)
 
@@ -189,43 +322,6 @@ function renderPagination(page: number, totalPages: number): string {
             <button class="admin-button admin-button--primary" data-page-nav="next" ${page >= totalPages ? 'disabled' : ''}>Next</button>
         </div>
     `
-}
-
-function bindPagination(
-    root: HTMLElement,
-    getState: () => AdminUsersQueryState,
-    onNavigate: (page: number) => Promise<void>,
-): void {
-    root.querySelectorAll<HTMLButtonElement>('[data-page-nav]').forEach((button) => {
-        button.addEventListener('click', async () => {
-            const currentPage = getState().page
-            const direction = button.dataset.pageNav === 'next' ? 1 : -1
-            await onNavigate(Math.max(1, currentPage + direction))
-        })
-    })
-}
-
-function bindSorting(
-    buttons: NodeListOf<HTMLButtonElement>,
-    getState: () => AdminUsersQueryState,
-    onSort: (sort: AdminUsersSortKey, direction: AdminUsersSortDirection) => Promise<void>,
-): void {
-    buttons.forEach((button) => {
-        button.addEventListener('click', async () => {
-            const sortKey = button.getAttribute('sort-key') as AdminUsersSortKey | null
-
-            if (!sortKey) {
-                return
-            }
-
-            const currentState = getState()
-            const currentSort = currentState.sort
-            const currentDirection = currentState.direction
-            const nextDirection: AdminUsersSortDirection = currentSort === sortKey && currentDirection === 'asc' ? 'desc' : 'asc'
-
-            await onSort(sortKey, nextDirection)
-        })
-    })
 }
 
 function getInitialState(
@@ -279,20 +375,38 @@ function syncSortButtons(buttons: NodeListOf<HTMLButtonElement>, state: AdminUse
     })
 }
 
-function syncRoleOptions(select: HTMLSelectElement, availableRoles: string[], activeRole: string): void {
-    const options = ['all', ...availableRoles]
-    const labels = new Map<string, string>([
-        ['all', 'All roles'],
-    ])
+function syncRoleOptions(
+    select: HTMLSelectElement,
+    roleFilters: AdminUserRoleFilterOption[],
+    activeRole: string,
+): void {
+    select.innerHTML = roleFilters
+        .map((roleFilter) => {
+            const selected = roleFilter.value === activeRole ? ' selected' : ''
 
-    select.innerHTML = options
-        .map((value) => {
-            const label = labels.get(value) ?? value
-            const selected = value === activeRole ? ' selected' : ''
-
-            return `<option value="${escapeHtml(value)}"${selected}>${escapeHtml(label)}</option>`
+            return `<option value="${escapeHtml(roleFilter.value)}"${selected}>${escapeHtml(roleFilter.label)}</option>`
         })
         .join('')
+}
+
+function syncRootState(root: HTMLElement, tableBody: HTMLElement, empty: HTMLElement): void {
+    if (tableHasRows(tableBody)) {
+        setPageReady(root)
+
+        return
+    }
+
+    if (emptyIsVisible(empty)) {
+        setPageEmpty(root)
+    }
+}
+
+function tableHasRows(tableBody: HTMLElement): boolean {
+    return tableBody.querySelector('[data-testid="users-table-row"]') !== null
+}
+
+function emptyIsVisible(empty: HTMLElement): boolean {
+    return !empty.classList.contains('is-hidden')
 }
 
 function renderAccessBadges(user: AdminUserRecord): string {
@@ -313,52 +427,21 @@ function renderAccessBadges(user: AdminUserRecord): string {
     return `<div class="admin-applied-filters">${badges.join('')}</div>`
 }
 
-function bindRoleEditors(
-    tableBody: HTMLElement,
-    users: AdminUserRecord[],
-    assignableRoles: string[],
+function openRoleModal(
     modal: HTMLElement,
     formId: HTMLInputElement,
     multiSelect: HTMLSelectElement,
+    user: AdminUserRecord,
+    assignableRoles: string[],
 ): void {
-    tableBody.querySelectorAll<HTMLButtonElement>('[data-user-edit-access]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const userId = Number(button.dataset.userEditAccess)
-            const user = users.find((item) => item.id === userId)
+    formId.value = String(user.id)
+    multiSelect.innerHTML = assignableRoles
+        .map((role) => {
+            const selected = user.roles.includes(role) ? ' selected' : ''
 
-            if (!user) {
-                return
-            }
-
-            formId.value = String(user.id)
-            multiSelect.innerHTML = assignableRoles
-                .map((role) => {
-                    const selected = user.roles.includes(role) ? ' selected' : ''
-
-                    return `<option value="${escapeHtml(role)}"${selected}>${escapeHtml(role)}</option>`
-                })
-                .join('')
-            openRoleModal(modal)
+            return `<option value="${escapeHtml(role)}"${selected}>${escapeHtml(role)}</option>`
         })
-    })
-}
-
-function bindImpersonationActions(tableBody: HTMLElement, impersonateBase: string): void {
-    tableBody.querySelectorAll<HTMLButtonElement>('[data-user-impersonate]').forEach((button) => {
-        button.addEventListener('click', async () => {
-            const userId = Number(button.dataset.userImpersonate)
-
-            if (!userId) {
-                return
-            }
-
-            const redirectTo = await service.impersonate(impersonateBase, userId)
-            window.location.assign(redirectTo)
-        })
-    })
-}
-
-function openRoleModal(modal: HTMLElement): void {
+        .join('')
     modal.hidden = false
 }
 

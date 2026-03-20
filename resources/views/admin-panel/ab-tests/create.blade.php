@@ -4,6 +4,8 @@
     <x-admin.page
         class="admin-page"
         data-admin-page="ab-test-create"
+        data-page-state="ready"
+        aria-busy="false"
         data-ab-test-create-endpoint="{{ route('admin.api.ab-tests.store', absolute: false) }}"
         data-ab-test-audience-estimate-endpoint="{{ route('admin.api.ab-tests.audience-estimate', absolute: false) }}"
         data-ab-tests-base-route="{{ route('admin.ab-tests.index', absolute: false) }}"
@@ -28,6 +30,7 @@
                             name="name"
                             autocomplete="off"
                             placeholder="Homepage Hero"
+                            value="{{ old('name') }}"
                             data-ab-test-input="name"
                         />
                     </x-admin.field>
@@ -38,6 +41,7 @@
                             name="slug"
                             autocomplete="off"
                             placeholder="homepage-hero"
+                            value="{{ old('slug') }}"
                             data-ab-test-input="slug"
                         />
                     </x-admin.field>
@@ -50,7 +54,7 @@
                         type="number"
                         min="0"
                         max="100"
-                        value="100"
+                        value="{{ old('trafficPercent', '100') }}"
                         data-ab-test-input="traffic"
                     />
                     <x-admin.form-help data-ab-test-traffic-estimate></x-admin.form-help>
@@ -61,6 +65,7 @@
                         id="ab-test-distribution-mode"
                         name="distributionMode"
                         label="Split evenly across all variants"
+                        :checked="old('distributionMode', 'manual') === 'equal'"
                         data-ab-test-input="split-evenly"
                     />
                 </x-admin.field>

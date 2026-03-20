@@ -2,7 +2,7 @@
 
 ## Architecture
 
-- Admin pages are Blade shells only.
+- Admin pages are SSR-first.
 - Admin data loads through authenticated admin API endpoints.
 - Page interactivity lives in TypeScript page connectors and modules.
 - Styling lives in SCSS layers, not in page templates.
@@ -19,11 +19,12 @@
 
 ## Rendering rules
 
-- Do not render admin business data directly inside Blade views.
-- Blade may render only page structure, headings, placeholders, and endpoint configuration via `data-*`.
+- Blade must render the first meaningful admin screen state whenever the controller can produce it.
+- Blade may render structured admin data for the initial screen.
 - Every admin page must declare `data-admin-page`.
+- Every JS-enhanced admin page must declare `data-page-state`.
 - Admin views must not duplicate raw button/card/table/header markup when a matching `x-admin.*` component exists.
-- Admin CRUD/list pages must prefer shell + API hydration rather than server-rendering data-heavy tables.
+- After bootstrap, TypeScript may refresh or mutate admin data through `/management/api/*`, but it must not be responsible for the first meaningful render.
 - Filters for data-heavy admin pages must live in their own dedicated filter section above the data surface, not inside the same section as the table/grid itself.
 
 ## Styling rules
@@ -70,10 +71,10 @@
 - `service.ts` is the only place allowed to talk to HTTP clients.
 - DOM wiring belongs in page connectors, not in service files.
 - Page connectors may bind UI behavior to stable kit markup, but they must not become a second design system.
-- Admin pages are shell-first. Blade may expose endpoints, ids, and tiny bootstrap hints, but interactive admin data must come from `/management/api/*`.
+- Admin pages are SSR-first. Blade owns the initial screen, while interactive refresh and mutation flows use `/management/api/*`.
 - Do not embed large domain payloads in admin Blade via `@json`, `json_encode()`, or similar inline JSON islands.
 - Data-heavy admin pages must update only their data regions when filters, sorting, or pagination change.
-- Role and permission management pages follow the same shell + API + partial-rerender contract as every other data-heavy admin page.
+- Role and permission management pages follow the same SSR-first + API enhancement contract as every other data-heavy admin page.
 - Search filters must auto-apply while typing with debounce and autocomplete; do not require an explicit Apply button for standard list filtering.
 - Transient admin feedback must use the shared toast flow instead of inline success/error/info blocks inside page content.
 - Do not introduce inline status messages that cause admin layouts to jump after user actions.
@@ -101,9 +102,8 @@
 
 ## Testing rules
 
-- Feature tests validate Blade shell and admin API envelope.
+- Feature tests validate the server-rendered Blade first screen and admin API envelope.
 - Vitest covers admin `service.ts`.
-- Playwright uses only `data-testid`.
 - Add or update feature tests when:
   - admin route visibility changes
   - impersonation behavior changes

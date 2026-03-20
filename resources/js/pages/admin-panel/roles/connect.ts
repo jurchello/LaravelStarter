@@ -1,16 +1,32 @@
 import { emitNotify } from '@/modules/toast/service'
 import {
+    connectPageModules,
+    definePageModule,
+} from '@/pages/module-connect'
+import {
     AdminRolesService,
     type AdminRoleRecord,
     type AdminRolesQueryState,
     type AdminRolesSortDirection,
     type AdminRolesSortKey,
 } from '@/modules/admin-roles/service'
+import {
+    setPageEmpty,
+    setPageError,
+    setPageLoading,
+    setPageReady,
+} from '@/shared/runtime-state/module'
 
 const service = new AdminRolesService()
 const SEARCH_DEBOUNCE_MS = 250
 
-export async function initAdminRolesPage(root: HTMLElement): Promise<void> {
+export function connectAdminRolesPage(root: HTMLElement): Promise<void> {
+    return connectPageModules([
+        definePageModule('admin-roles', () => bootstrapAdminRolesPage(root)),
+    ])
+}
+
+async function bootstrapAdminRolesPage(root: HTMLElement): Promise<void> {
     const endpoint = root.dataset.rolesEndpoint
     const suggestionsEndpoint = root.dataset.rolesSuggestionsEndpoint
     const permissionUpdateBase = root.dataset.rolesPermissionUpdateBase
@@ -61,75 +77,120 @@ export async function initAdminRolesPage(root: HTMLElement): Promise<void> {
     let state = getInitialState(currentSort, currentDirection, searchInput.value)
     let searchTimer: number | null = null
     let suggestionRequestId = 0
+    let currentItems: AdminRoleRecord[] = []
+    let availablePermissions: string[] = []
+
     const resetForm = (): void => {
         formId.value = ''
         formName.value = ''
         formSubmit.textContent = 'Save role'
     }
 
-    const render = async (): Promise<void> => {
-        const result = await service.load(endpoint, state)
+    syncSortButtons(sortButtons, state)
+    syncRootState(root, tableBody, empty)
 
-        tableBody.innerHTML = result.items.map(renderRow).join('')
-        empty.classList.toggle('is-hidden', result.items.length > 0)
-        summary.textContent = `${result.total} total roles`
-        pagination.innerHTML = renderPagination(result.page, result.totalPages)
-        syncSortButtons(sortButtons, state)
-        syncUrl(state)
-        bindRowActions(
-            tableBody,
-            result.items,
-            result.availablePermissions,
-            endpoint,
-            formId,
-            formName,
-            formSubmit,
-            permissionsModal,
-            permissionsFormId,
-            permissionsSelect,
-            render,
-        )
-        bindPagination(pagination, () => state, async (page) => {
-            state = { ...state, page }
-            await render()
-        })
-    }
-
-    await render()
-
-    bindSorting(sortButtons, () => state, async (sort, direction) => {
-        state = { ...state, sort, direction, page: 1 }
-        await render()
-    })
-
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault()
-
-        const name = formName.value.trim()
-        if (name === '') {
-            emitNotify({
-                type: 'danger',
-                message: 'Role name is required.',
-            })
+    const hydrateCurrentPageData = async (): Promise<void> => {
+        if (currentItems.length > 0 || emptyIsVisible(empty)) {
             return
         }
 
-        if (formId.value === '') {
-            await service.create(endpoint, name)
+        const result = await service.load(endpoint, state)
+
+        currentItems = result.items
+        availablePermissions = result.availablePermissions
+    }
+
+    const refresh = async (): Promise<void> => {
+        setPageLoading(root)
+
+        try {
+            const result = await service.load(endpoint, state)
+
+            applyRolesResult(result, {
+                root,
+                tableBody,
+                pagination,
+                summary,
+                empty,
+                sortButtons,
+            }, state)
+            currentItems = result.items
+            availablePermissions = result.availablePermissions
+        } catch {
+            setPageError(root)
             emitNotify({
-                type: 'success',
-                message: 'Role created.',
-            })
-        } else {
-            await service.update(endpoint, Number(formId.value), name)
-            emitNotify({
-                type: 'success',
-                message: 'Role updated.',
+                type: 'error',
+                message: 'Unable to refresh roles right now.',
             })
         }
+    }
 
-        resetForm()
-        await render()
+    pagination.addEventListener('click', (event) => {
+        const target = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>('[data-page-nav]')
+
+        if (!target) {
+            return
+        }
+
+        void (async () => {
+            const currentPage = state.page
+            const direction = target.dataset.pageNav === 'next' ? 1 : -1
+
+            state = { ...state, page: Math.max(1, currentPage + direction) }
+            await refresh()
+        })()
+    })
+
+    sortButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const sortKey = button.getAttribute('sort-key') as AdminRolesSortKey | null
+
+            if (!sortKey) {
+                return
+            }
+
+            void (async () => {
+                const nextDirection: AdminRolesSortDirection =
+                    state.sort === sortKey && state.direction === 'asc' ? 'desc' : 'asc'
+
+                state = { ...state, sort: sortKey, direction: nextDirection, page: 1 }
+                await refresh()
+            })()
+        })
+    })
+
+    form.addEventListener('submit', (event) => {
+        event.preventDefault()
+
+        void (async () => {
+            const name = formName.value.trim()
+
+            if (name === '') {
+                emitNotify({
+                    type: 'danger',
+                    message: 'Role name is required.',
+                })
+
+                return
+            }
+
+            if (formId.value === '') {
+                await service.create(endpoint, name)
+                emitNotify({
+                    type: 'success',
+                    message: 'Role created.',
+                })
+            } else {
+                await service.update(endpoint, Number(formId.value), name)
+                emitNotify({
+                    type: 'success',
+                    message: 'Role updated.',
+                })
+            }
+
+            resetForm()
+            await refresh()
+        })()
     })
 
     formCancel.addEventListener('click', () => {
@@ -148,7 +209,7 @@ export async function initAdminRolesPage(root: HTMLElement): Promise<void> {
         }
     })
 
-    searchInput.addEventListener('input', async () => {
+    searchInput.addEventListener('input', () => {
         if (searchTimer) {
             window.clearTimeout(searchTimer)
         }
@@ -170,100 +231,128 @@ export async function initAdminRolesPage(root: HTMLElement): Promise<void> {
             suggestionsList.innerHTML = ''
         }
 
-        searchTimer = window.setTimeout(async () => {
-            state = {
-                ...state,
-                search: query,
-                page: 1,
-            }
-            await render()
+        searchTimer = window.setTimeout(() => {
+            state = { ...state, search: query, page: 1 }
+            void refresh()
         }, SEARCH_DEBOUNCE_MS)
     })
 
-    permissionsForm.addEventListener('submit', async (event) => {
-        event.preventDefault()
+    tableBody.addEventListener('click', (event) => {
+        const target = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>('button')
 
-        const roleId = Number(permissionsFormId.value)
-
-        if (!roleId) {
+        if (!target) {
             return
         }
 
-        const permissions = Array.from(permissionsSelect.selectedOptions).map((option) => option.value)
+        void (async () => {
+            const roleEditId = Number(target.dataset.roleEdit)
 
-        await service.updatePermissions(permissionUpdateBase, roleId, permissions)
-        closePermissionsModal(permissionsModal)
-        emitNotify({
-            type: 'success',
-            message: 'Role permissions updated.',
-        })
-        await render()
+            if (roleEditId > 0) {
+                await hydrateCurrentPageData()
+
+                const role = currentItems.find((item) => item.id === roleEditId)
+
+                if (!role) {
+                    emitNotify({
+                        type: 'error',
+                        message: 'Unable to load the selected role.',
+                    })
+
+                    return
+                }
+
+                formId.value = String(role.id)
+                formName.value = role.name
+                formSubmit.textContent = 'Update role'
+                formName.focus()
+
+                return
+            }
+
+            const roleDeleteId = Number(target.dataset.roleDelete)
+
+            if (roleDeleteId > 0) {
+                await service.delete(endpoint, roleDeleteId)
+                emitNotify({
+                    type: 'success',
+                    message: 'Role deleted.',
+                })
+                await refresh()
+
+                return
+            }
+
+            const editPermissionsId = Number(target.dataset.roleEditPermissions)
+
+            if (editPermissionsId > 0) {
+                await hydrateCurrentPageData()
+
+                const role = currentItems.find((item) => item.id === editPermissionsId)
+
+                if (!role) {
+                    emitNotify({
+                        type: 'error',
+                        message: 'Unable to load role permissions right now.',
+                    })
+
+                    return
+                }
+
+                permissionsFormId.value = String(role.id)
+                permissionsSelect.innerHTML = availablePermissions
+                    .map((permission) => {
+                        const selected = role.permissions.includes(permission) ? ' selected' : ''
+
+                        return `<option value="${escapeHtml(permission)}"${selected}>${escapeHtml(permission)}</option>`
+                    })
+                    .join('')
+                openPermissionsModal(permissionsModal)
+            }
+        })()
+    })
+
+    permissionsForm.addEventListener('submit', (event) => {
+        event.preventDefault()
+
+        void (async () => {
+            const roleId = Number(permissionsFormId.value)
+
+            if (!roleId) {
+                return
+            }
+
+            const permissions = Array.from(permissionsSelect.selectedOptions).map((option) => option.value)
+
+            await service.updatePermissions(permissionUpdateBase, roleId, permissions)
+            closePermissionsModal(permissionsModal)
+            emitNotify({
+                type: 'success',
+                message: 'Role permissions updated.',
+            })
+            await refresh()
+        })()
     })
 }
 
-function bindRowActions(
-    root: HTMLElement,
-    roles: AdminRoleRecord[],
-    availablePermissions: string[],
-    endpoint: string,
-    formId: HTMLInputElement,
-    formName: HTMLInputElement,
-    formSubmit: HTMLButtonElement,
-    permissionsModal: HTMLElement,
-    permissionsFormId: HTMLInputElement,
-    permissionsSelect: HTMLSelectElement,
-    rerender: () => Promise<void>,
+function applyRolesResult(
+    result: Awaited<ReturnType<AdminRolesService['load']>>,
+    elements: {
+        root: HTMLElement
+        tableBody: HTMLElement
+        pagination: HTMLElement
+        summary: HTMLElement
+        empty: HTMLElement
+        sortButtons: NodeListOf<HTMLButtonElement>
+    },
+    state: AdminRolesQueryState,
 ): void {
-    root.querySelectorAll<HTMLButtonElement>('[data-role-edit]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const roleId = Number(button.dataset.roleEdit)
-            const role = roles.find((item) => item.id === roleId)
-
-            if (!role) {
-                return
-            }
-
-            formId.value = String(role.id)
-            formName.value = role.name
-            formSubmit.textContent = 'Update role'
-            formName.focus()
-        })
-    })
-
-    root.querySelectorAll<HTMLButtonElement>('[data-role-delete]').forEach((button) => {
-        button.addEventListener('click', async () => {
-            const roleId = Number(button.dataset.roleDelete)
-
-            await service.delete(endpoint, roleId)
-            emitNotify({
-                type: 'success',
-                message: 'Role deleted.',
-            })
-            await rerender()
-        })
-    })
-
-    root.querySelectorAll<HTMLButtonElement>('[data-role-edit-permissions]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const roleId = Number(button.dataset.roleEditPermissions)
-            const role = roles.find((item) => item.id === roleId)
-
-            if (!role) {
-                return
-            }
-
-            permissionsFormId.value = String(role.id)
-            permissionsSelect.innerHTML = availablePermissions
-                .map((permission) => {
-                    const selected = role.permissions.includes(permission) ? ' selected' : ''
-
-                    return `<option value="${escapeHtml(permission)}"${selected}>${escapeHtml(permission)}</option>`
-                })
-                .join('')
-
-            openPermissionsModal(permissionsModal)
-        })
-    })
+    elements.tableBody.innerHTML = result.items.map(renderRow).join('')
+    elements.empty.classList.toggle('is-hidden', result.items.length > 0)
+    elements.summary.textContent = `${result.total} total roles`
+    elements.pagination.innerHTML = renderPagination(result.page, result.totalPages)
+    syncSortButtons(elements.sortButtons, state)
+    syncUrl(state)
+    syncRootState(elements.root, elements.tableBody, elements.empty)
 }
 
 function renderRow(role: AdminRoleRecord): string {
@@ -300,42 +389,6 @@ function renderPagination(page: number, totalPages: number): string {
             <button class="admin-button admin-button--primary" data-page-nav="next" ${page >= totalPages ? 'disabled' : ''}>Next</button>
         </div>
     `
-}
-
-function bindPagination(
-    root: HTMLElement,
-    getState: () => AdminRolesQueryState,
-    onNavigate: (page: number) => Promise<void>,
-): void {
-    root.querySelectorAll<HTMLButtonElement>('[data-page-nav]').forEach((button) => {
-        button.addEventListener('click', async () => {
-            const currentPage = getState().page
-            const direction = button.dataset.pageNav === 'next' ? 1 : -1
-            await onNavigate(Math.max(1, currentPage + direction))
-        })
-    })
-}
-
-function bindSorting(
-    buttons: NodeListOf<HTMLButtonElement>,
-    getState: () => AdminRolesQueryState,
-    onSort: (sort: AdminRolesSortKey, direction: AdminRolesSortDirection) => Promise<void>,
-): void {
-    buttons.forEach((button) => {
-        button.addEventListener('click', async () => {
-            const sortKey = button.getAttribute('sort-key') as AdminRolesSortKey | null
-
-            if (!sortKey) {
-                return
-            }
-
-            const currentState = getState()
-            const nextDirection: AdminRolesSortDirection =
-                currentState.sort === sortKey && currentState.direction === 'asc' ? 'desc' : 'asc'
-
-            await onSort(sortKey, nextDirection)
-        })
-    })
 }
 
 function getInitialState(
@@ -379,6 +432,22 @@ function syncSortButtons(buttons: NodeListOf<HTMLButtonElement>, state: AdminRol
         button.classList.toggle('is-asc', isActive && state.direction === 'asc')
         button.classList.toggle('is-desc', isActive && state.direction === 'desc')
     })
+}
+
+function syncRootState(root: HTMLElement, tableBody: HTMLElement, empty: HTMLElement): void {
+    if (tableBody.querySelector('[data-testid="roles-table-row"]')) {
+        setPageReady(root)
+
+        return
+    }
+
+    if (!empty.classList.contains('is-hidden')) {
+        setPageEmpty(root)
+    }
+}
+
+function emptyIsVisible(empty: HTMLElement): boolean {
+    return !empty.classList.contains('is-hidden')
 }
 
 function escapeHtml(value: string): string {

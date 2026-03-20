@@ -27,7 +27,12 @@ describe('AdminUsersService', () => {
                             registeredAt: '2026-03-19T07:00:00+00:00',
                         },
                     ],
-                    availableRoles: ['Superadmin', 'Admin', 'Manager'],
+                    roleFilters: [
+                        { value: 'all', label: 'All roles' },
+                        { value: 'superadmin', label: 'Superadmin' },
+                        { value: 'Admin', label: 'Admin' },
+                        { value: 'Manager', label: 'Manager' },
+                    ],
                     assignableRoles: ['Admin', 'Manager'],
                 },
                 meta: {
@@ -59,7 +64,12 @@ describe('AdminUsersService', () => {
                     registeredAt: '2026-03-19T07:00:00+00:00',
                 },
             ],
-            availableRoles: ['Superadmin', 'Admin', 'Manager'],
+            roleFilters: [
+                { value: 'all', label: 'All roles' },
+                { value: 'superadmin', label: 'Superadmin' },
+                { value: 'Admin', label: 'Admin' },
+                { value: 'Manager', label: 'Manager' },
+            ],
             assignableRoles: ['Admin', 'Manager'],
             page: 2,
             perPage: 50,

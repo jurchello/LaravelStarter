@@ -12,12 +12,17 @@ export type AdminUserRecord = {
 
 export type AdminUsersResult = {
     items: AdminUserRecord[]
-    availableRoles: string[]
+    roleFilters: AdminUserRoleFilterOption[]
     assignableRoles: string[]
     page: number
     perPage: number
     total: number
     totalPages: number
+}
+
+export type AdminUserRoleFilterOption = {
+    value: string
+    label: string
 }
 
 export type AdminUsersSortKey = 'id' | 'name' | 'email' | 'role' | 'registeredAt'
@@ -33,7 +38,7 @@ export type AdminUsersQueryState = {
 type AdminUsersResponse = {
     data: {
         items: AdminUserRecord[]
-        availableRoles: string[]
+        roleFilters: AdminUserRoleFilterOption[]
         assignableRoles: string[]
     }
     meta: {
@@ -72,7 +77,7 @@ export class AdminUsersService {
 
         return {
             items: response.data.data.items,
-            availableRoles: response.data.data.availableRoles,
+            roleFilters: response.data.data.roleFilters,
             assignableRoles: response.data.data.assignableRoles,
             page: response.data.meta.page,
             perPage: response.data.meta.perPage,

@@ -22,7 +22,7 @@ When in doubt — read it anyway. It takes less time than undoing a wrong assump
 
 | Document | Read when... |
 |----------|-------------|
-| `docs/standards/testing-standards.md` | Writing or reviewing any tests (backend, frontend, e2e) |
+| `docs/standards/testing-standards.md` | Writing or reviewing backend or frontend tests |
 | `docs/architecture/frontend.md` | Any frontend work (modules, TS logic, page wiring) |
 | `docs/standards/dto-examples.md` | Creating or modifying DTOs, request handling |
 | `docs/architecture/ai-agent.md` | Working on agent logic, LLM calls, budgets, orchestration, or external AI integrations |

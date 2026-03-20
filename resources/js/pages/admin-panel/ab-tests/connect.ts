@@ -7,11 +7,27 @@ import {
     type AdminAbTestsSortKey,
     type AdminAbTestsStatusFilter,
 } from '@/modules/admin-ab-tests/service'
+import {
+    connectPageModules,
+    definePageModule,
+} from '@/pages/module-connect'
+import {
+    setPageEmpty,
+    setPageError,
+    setPageLoading,
+    setPageReady,
+} from '@/shared/runtime-state/module'
 
 const service = new AdminAbTestsService()
 const SEARCH_DEBOUNCE_MS = 250
 
-export async function initAdminAbTestsPage(root: HTMLElement): Promise<void> {
+export function connectAdminAbTestsPage(root: HTMLElement): Promise<void> {
+    return connectPageModules([
+        definePageModule('admin-ab-tests-index', () => bootstrapAdminAbTestsPage(root)),
+    ])
+}
+
+async function bootstrapAdminAbTestsPage(root: HTMLElement): Promise<void> {
     const endpoint = root.dataset.abTestsEndpoint
     const suggestionsEndpoint = root.dataset.abTestsSuggestionsEndpoint
     const manageBase = root.dataset.abTestsBaseRoute ?? '/management/ab-tests'
@@ -34,38 +50,72 @@ export async function initAdminAbTestsPage(root: HTMLElement): Promise<void> {
     let searchTimer: number | null = null
     let suggestionRequestId = 0
 
-    const render = async (): Promise<void> => {
-        const result = await service.load(endpoint, state)
+    syncSortButtons(sortButtons, state)
+    syncIndexPageState(root, tableBody, empty)
 
-        tableBody.innerHTML = result.items.map((test) => renderRow(test, manageBase)).join('')
-        empty.classList.toggle('is-hidden', result.items.length > 0)
-        summary.textContent = `${result.total} total tests`
-        pagination.innerHTML = renderPagination(result.page, result.totalPages)
-        syncSortButtons(sortButtons, state)
-        syncUrl(state)
-        bindPagination(pagination, () => state, async (page) => {
-            state = { ...state, page }
-            await render()
-        })
+    const render = async (): Promise<void> => {
+        setPageLoading(root)
+
+        try {
+            const result = await service.load(endpoint, state)
+
+            tableBody.innerHTML = result.items.map((test) => renderRow(test, manageBase)).join('')
+            empty.classList.toggle('is-hidden', result.items.length > 0)
+            summary.textContent = `${result.total} total tests`
+            pagination.innerHTML = renderPagination(result.page, result.totalPages)
+            syncSortButtons(sortButtons, state)
+            syncUrl(state)
+            syncIndexPageState(root, tableBody, empty)
+        } catch {
+            setPageError(root)
+        }
     }
 
-    await render()
+    pagination.addEventListener('click', (event) => {
+        const target = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>('[data-page-nav]')
 
-    bindSorting(sortButtons, () => state, async (sort, direction) => {
-        state = { ...state, sort, direction, page: 1 }
-        await render()
-    })
-
-    statusSelect.addEventListener('change', async () => {
-        state = {
-            ...state,
-            status: statusSelect.value as AdminAbTestsStatusFilter,
-            page: 1,
+        if (!target) {
+            return
         }
-        await render()
+
+        void (async () => {
+            const direction = target.dataset.pageNav === 'next' ? 1 : -1
+
+            state = { ...state, page: Math.max(1, state.page + direction) }
+            await render()
+        })()
     })
 
-    searchInput.addEventListener('input', async () => {
+    sortButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const sortKey = button.getAttribute('sort-key') as AdminAbTestsSortKey | null
+
+            if (!sortKey) {
+                return
+            }
+
+            void (async () => {
+                const nextDirection: AdminAbTestsSortDirection =
+                    state.sort === sortKey && state.direction === 'asc' ? 'desc' : 'asc'
+
+                state = { ...state, sort: sortKey, direction: nextDirection, page: 1 }
+                await render()
+            })()
+        })
+    })
+
+    statusSelect.addEventListener('change', () => {
+        void (async () => {
+            state = {
+                ...state,
+                status: statusSelect.value as AdminAbTestsStatusFilter,
+                page: 1,
+            }
+            await render()
+        })()
+    })
+
+    searchInput.addEventListener('input', () => {
         if (searchTimer) {
             window.clearTimeout(searchTimer)
         }
@@ -87,18 +137,24 @@ export async function initAdminAbTestsPage(root: HTMLElement): Promise<void> {
             suggestionsList.innerHTML = ''
         }
 
-        searchTimer = window.setTimeout(async () => {
+        searchTimer = window.setTimeout(() => {
             state = {
                 ...state,
                 search: query,
                 page: 1,
             }
-            await render()
+            void render()
         }, SEARCH_DEBOUNCE_MS)
     })
 }
 
-export async function initAdminAbTestCreatePage(root: HTMLElement): Promise<void> {
+export function connectAdminAbTestCreatePage(root: HTMLElement): Promise<void> {
+    return connectPageModules([
+        definePageModule('admin-ab-test-create', () => bootstrapAdminAbTestCreatePage(root)),
+    ])
+}
+
+async function bootstrapAdminAbTestCreatePage(root: HTMLElement): Promise<void> {
     const endpoint = root.dataset.abTestCreateEndpoint
     const audienceEstimateEndpoint = root.dataset.abTestAudienceEstimateEndpoint
     const baseRoute = root.dataset.abTestsBaseRoute ?? '/management/ab-tests'
@@ -117,26 +173,34 @@ export async function initAdminAbTestCreatePage(root: HTMLElement): Promise<void
     bindTrafficEstimate(trafficInput, trafficEstimate, audienceEstimateEndpoint)
     void updateTrafficEstimate(trafficInput, trafficEstimate, audienceEstimateEndpoint)
 
-    form.addEventListener('submit', async (event) => {
+    form.addEventListener('submit', (event) => {
         event.preventDefault()
 
-        try {
-            const test = await service.create(endpoint, {
-                name: nameInput.value.trim(),
-                slug: slugInput.value.trim(),
-                trafficPercent: Number(trafficInput.value || '0'),
-                distributionMode: splitEvenlyInput.checked ? 'equal' : 'manual',
-            })
+        void (async () => {
+            try {
+                const test = await service.create(endpoint, {
+                    name: nameInput.value.trim(),
+                    slug: slugInput.value.trim(),
+                    trafficPercent: Number(trafficInput.value || '0'),
+                    distributionMode: splitEvenlyInput.checked ? 'equal' : 'manual',
+                })
 
-            dispatchToast('success', 'AB test created.')
-            window.location.assign(`${baseRoute}/${test.id}`)
-        } catch (error) {
-            dispatchHttpError(error, 'Unable to create the AB test.')
-        }
+                dispatchToast('success', 'AB test created.')
+                window.location.assign(`${baseRoute}/${test.id}`)
+            } catch (error) {
+                dispatchHttpError(error, 'Unable to create the AB test.')
+            }
+        })()
     })
 }
 
-export async function initAdminAbTestManagementPage(root: HTMLElement): Promise<void> {
+export function connectAdminAbTestManagementPage(root: HTMLElement): Promise<void> {
+    return connectPageModules([
+        definePageModule('admin-ab-test-management', () => bootstrapAdminAbTestManagementPage(root)),
+    ])
+}
+
+async function bootstrapAdminAbTestManagementPage(root: HTMLElement): Promise<void> {
     const detailEndpoint = root.dataset.abTestEndpoint
     const audienceEstimateEndpoint = root.dataset.abTestAudienceEstimateEndpoint
     const updateEndpoint = root.dataset.abTestUpdateEndpoint
@@ -195,8 +259,6 @@ export async function initAdminAbTestManagementPage(root: HTMLElement): Promise<
 
     bindSlugSync(variantNameInput, variantSlugInput)
 
-    let current: AdminAbTestManagementRecord | null = null
-
     const syncVariantWeightState = (): void => {
         const isEqualMode = splitEvenlyInput.checked
 
@@ -208,7 +270,6 @@ export async function initAdminAbTestManagementPage(root: HTMLElement): Promise<
     }
 
     const render = (test: AdminAbTestManagementRecord): void => {
-        current = test
         nameInput.value = test.name
         slugInput.value = test.slug
         trafficInput.value = String(test.trafficPercent)
@@ -222,63 +283,67 @@ export async function initAdminAbTestManagementPage(root: HTMLElement): Promise<
         syncStats(stats, test)
         syncStatusButtons(statusButtons, test.status)
         syncVariantWeightState()
-        bindVariantActions(root, variantsBody, variantsEndpoint, async (view) => {
+        bindVariantActions(root, variantsBody, variantsEndpoint, (view) => {
             render(view)
         })
     }
-
-    const load = async (): Promise<void> => {
-        try {
-            render(await service.loadDetail(detailEndpoint))
-        } catch (error) {
-            dispatchHttpError(error, 'Unable to load the AB test.')
-        }
-    }
-
-    await load()
 
     splitEvenlyInput.addEventListener('change', () => {
         syncVariantWeightState()
     })
     bindTrafficEstimate(trafficInput, trafficEstimate, audienceEstimateEndpoint)
-
-    configForm.addEventListener('submit', async (event) => {
-        event.preventDefault()
-
-        try {
-            render(await service.update(updateEndpoint, {
-                name: nameInput.value.trim(),
-                slug: slugInput.value.trim(),
-                trafficPercent: Number(trafficInput.value || '0'),
-                distributionMode: splitEvenlyInput.checked ? 'equal' : 'manual',
-            }))
-            dispatchToast('success', 'AB test updated.')
-        } catch (error) {
-            dispatchHttpError(error, 'Unable to update the AB test.')
-        }
+    void updateTrafficEstimate(trafficInput, trafficEstimate, audienceEstimateEndpoint)
+    bindVariantActions(root, variantsBody, variantsEndpoint, (view) => {
+        render(view)
     })
 
-    variantForm.addEventListener('submit', async (event) => {
+    configForm.addEventListener('submit', (event) => {
         event.preventDefault()
 
-        const payload = {
-            name: variantNameInput.value.trim(),
-            slug: variantSlugInput.value.trim(),
-            weight: splitEvenlyInput.checked ? 100 : Number(variantWeightInput.value || '0'),
-        }
-        const editingVariantId = variantForm.dataset.abTestVariantEditing
+        void (async () => {
+            try {
+                setPageLoading(root)
+                render(await service.update(updateEndpoint, {
+                    name: nameInput.value.trim(),
+                    slug: slugInput.value.trim(),
+                    trafficPercent: Number(trafficInput.value || '0'),
+                    distributionMode: splitEvenlyInput.checked ? 'equal' : 'manual',
+                }))
+                setPageReady(root)
+                dispatchToast('success', 'AB test updated.')
+            } catch (error) {
+                setPageError(root)
+                dispatchHttpError(error, 'Unable to update the AB test.')
+            }
+        })()
+    })
 
-        try {
-            const view = editingVariantId
-                ? await service.updateVariant(`${variantsEndpoint}/${editingVariantId}`, payload)
-                : await service.createVariant(variantsEndpoint, payload)
+    variantForm.addEventListener('submit', (event) => {
+        event.preventDefault()
 
-            render(view)
-            resetVariantForm(variantForm, variantNameInput, variantSlugInput, variantWeightInput, variantSubmit, variantReset)
-            dispatchToast('success', editingVariantId ? 'Variant updated.' : 'Variant created.')
-        } catch (error) {
-            dispatchHttpError(error, editingVariantId ? 'Unable to update the variant.' : 'Unable to create the variant.')
-        }
+        void (async () => {
+            const payload = {
+                name: variantNameInput.value.trim(),
+                slug: variantSlugInput.value.trim(),
+                weight: splitEvenlyInput.checked ? 100 : Number(variantWeightInput.value || '0'),
+            }
+            const editingVariantId = variantForm.dataset.abTestVariantEditing
+
+            try {
+                setPageLoading(root)
+                const view = editingVariantId
+                    ? await service.updateVariant(`${variantsEndpoint}/${editingVariantId}`, payload)
+                    : await service.createVariant(variantsEndpoint, payload)
+
+                render(view)
+                setPageReady(root)
+                resetVariantForm(variantForm, variantNameInput, variantSlugInput, variantWeightInput, variantSubmit, variantReset)
+                dispatchToast('success', editingVariantId ? 'Variant updated.' : 'Variant created.')
+            } catch (error) {
+                setPageError(root)
+                dispatchHttpError(error, editingVariantId ? 'Unable to update the variant.' : 'Unable to create the variant.')
+            }
+        })()
     })
 
     variantReset.addEventListener('click', () => {
@@ -286,40 +351,55 @@ export async function initAdminAbTestManagementPage(root: HTMLElement): Promise<
     })
 
     statusButtons.forEach((button) => {
-        button.addEventListener('click', async () => {
+        button.addEventListener('click', () => {
             const nextStatus = button.dataset.abTestStatusAction as AdminAbTestRecord['status'] | undefined
 
             if (!nextStatus) {
                 return
             }
 
-            try {
-                render(await service.updateStatus(statusEndpoint, nextStatus))
-                dispatchToast('success', `Status updated to ${nextStatus}.`)
-            } catch (error) {
-                dispatchHttpError(error, 'Unable to update the AB test status.')
-            }
+            void (async () => {
+                try {
+                    setPageLoading(root)
+                    render(await service.updateStatus(statusEndpoint, nextStatus))
+                    setPageReady(root)
+                    dispatchToast('success', `Status updated to ${nextStatus}.`)
+                } catch (error) {
+                    setPageError(root)
+                    dispatchHttpError(error, 'Unable to update the AB test status.')
+                }
+            })()
         })
     })
 
-    deleteTrigger.addEventListener('click', async () => {
+    deleteTrigger.addEventListener('click', () => {
         const shouldDelete = window.confirm('Delete this AB test?')
 
         if (!shouldDelete) {
             return
         }
 
-        try {
-            await service.remove(deleteEndpoint)
-            dispatchToast('success', 'AB test deleted.')
-            window.location.assign(baseRoute)
-        } catch (error) {
-            dispatchHttpError(error, 'Unable to delete the AB test.')
-        }
+        void (async () => {
+            try {
+                setPageLoading(root)
+                await service.remove(deleteEndpoint)
+                dispatchToast('success', 'AB test deleted.')
+                window.location.assign(baseRoute)
+            } catch (error) {
+                setPageError(root)
+                dispatchHttpError(error, 'Unable to delete the AB test.')
+            }
+        })()
     })
 }
 
-export async function initAdminAbTestAssignmentsPage(root: HTMLElement): Promise<void> {
+export function connectAdminAbTestAssignmentsPage(root: HTMLElement): Promise<void> {
+    return connectPageModules([
+        definePageModule('admin-ab-test-assignments', () => bootstrapAdminAbTestAssignmentsPage(root)),
+    ])
+}
+
+async function bootstrapAdminAbTestAssignmentsPage(root: HTMLElement): Promise<void> {
     const endpoint = root.dataset.abTestAssignmentsEndpoint
     const body = root.querySelector<HTMLElement>('[data-ab-test-assignments-body]')
     const summary = root.querySelector<HTMLElement>('[data-ab-test-assignments-summary]')
@@ -333,23 +413,41 @@ export async function initAdminAbTestAssignmentsPage(root: HTMLElement): Promise
     let page = Number(new URL(window.location.href).searchParams.get('page') ?? '1')
 
     const render = async (): Promise<void> => {
-        const result = await service.loadAssignments(endpoint, page)
+        setPageLoading(root)
 
-        body.innerHTML = result.items.map(renderAssignmentRow).join('')
-        empty.classList.toggle('is-hidden', result.items.length > 0)
-        summary.textContent = `${result.total} total assignments`
-        pagination.innerHTML = renderPagination(result.page, result.totalPages)
-        bindSimplePagination(pagination, result.page, async (nextPage) => {
-            page = nextPage
-            syncSimplePageUrl(page)
-            await render()
-        })
+        try {
+            const result = await service.loadAssignments(endpoint, page)
+
+            body.innerHTML = result.items.map(renderAssignmentRow).join('')
+            empty.classList.toggle('is-hidden', result.items.length > 0)
+            summary.textContent = `${result.total} total assignments`
+            pagination.innerHTML = renderPagination(result.page, result.totalPages)
+            bindSimplePagination(pagination, result.page, async (nextPage) => {
+                page = nextPage
+                syncSimplePageUrl(page)
+                await render()
+            })
+            syncListPageState(root, body, empty, '[data-testid="ab-test-assignment-row"]')
+        } catch {
+            setPageError(root)
+        }
     }
 
-    await render()
+    syncListPageState(root, body, empty, '[data-testid="ab-test-assignment-row"]')
+    bindSimplePagination(pagination, page, async (nextPage) => {
+        page = nextPage
+        syncSimplePageUrl(page)
+        await render()
+    })
 }
 
-export async function initAdminAbTestEventsPage(root: HTMLElement): Promise<void> {
+export function connectAdminAbTestEventsPage(root: HTMLElement): Promise<void> {
+    return connectPageModules([
+        definePageModule('admin-ab-test-events', () => bootstrapAdminAbTestEventsPage(root)),
+    ])
+}
+
+async function bootstrapAdminAbTestEventsPage(root: HTMLElement): Promise<void> {
     const endpoint = root.dataset.abTestEventsEndpoint
     const body = root.querySelector<HTMLElement>('[data-ab-test-events-body]')
     const summary = root.querySelector<HTMLElement>('[data-ab-test-events-summary]')
@@ -363,23 +461,41 @@ export async function initAdminAbTestEventsPage(root: HTMLElement): Promise<void
     let page = Number(new URL(window.location.href).searchParams.get('page') ?? '1')
 
     const render = async (): Promise<void> => {
-        const result = await service.loadEvents(endpoint, page)
+        setPageLoading(root)
 
-        body.innerHTML = result.items.map(renderEventRow).join('')
-        empty.classList.toggle('is-hidden', result.items.length > 0)
-        summary.textContent = `${result.total} total events`
-        pagination.innerHTML = renderPagination(result.page, result.totalPages)
-        bindSimplePagination(pagination, result.page, async (nextPage) => {
-            page = nextPage
-            syncSimplePageUrl(page)
-            await render()
-        })
+        try {
+            const result = await service.loadEvents(endpoint, page)
+
+            body.innerHTML = result.items.map(renderEventRow).join('')
+            empty.classList.toggle('is-hidden', result.items.length > 0)
+            summary.textContent = `${result.total} total events`
+            pagination.innerHTML = renderPagination(result.page, result.totalPages)
+            bindSimplePagination(pagination, result.page, async (nextPage) => {
+                page = nextPage
+                syncSimplePageUrl(page)
+                await render()
+            })
+            syncListPageState(root, body, empty, '[data-testid="ab-test-event-row"]')
+        } catch {
+            setPageError(root)
+        }
     }
 
-    await render()
+    syncListPageState(root, body, empty, '[data-testid="ab-test-event-row"]')
+    bindSimplePagination(pagination, page, async (nextPage) => {
+        page = nextPage
+        syncSimplePageUrl(page)
+        await render()
+    })
 }
 
-export async function initAdminAbTestAnalyticsPage(root: HTMLElement): Promise<void> {
+export function connectAdminAbTestAnalyticsPage(root: HTMLElement): Promise<void> {
+    return connectPageModules([
+        definePageModule('admin-ab-test-analytics', () => bootstrapAdminAbTestAnalyticsPage(root)),
+    ])
+}
+
+async function bootstrapAdminAbTestAnalyticsPage(root: HTMLElement): Promise<void> {
     const endpoint = root.dataset.abTestAnalyticsEndpoint
     const status = root.querySelector<HTMLElement>('[data-ab-test-analytics-status]')
     const traffic = root.querySelector<HTMLElement>('[data-ab-test-analytics-traffic]')
@@ -391,23 +507,30 @@ export async function initAdminAbTestAnalyticsPage(root: HTMLElement): Promise<v
         return
     }
 
-    try {
-        const test = await service.loadDetail(endpoint)
+    if (
+        status.textContent?.trim() === '' ||
+        traffic.textContent?.trim() === '' ||
+        events.innerHTML.trim() === '' ||
+        variants.innerHTML.trim() === ''
+    ) {
+        try {
+            const test = await service.loadDetail(endpoint)
 
-        status.textContent = test.status
-        traffic.textContent = `${test.trafficPercent}%`
-        events.innerHTML = renderEventsSummary(test.analytics.eventsByName)
-        variants.innerHTML = test.variants.map((variant) => `
-            <tr>
-                <td>${escapeHtml(variant.name)}</td>
-                <td>${escapeHtml(variant.slug)}</td>
-                <td>${variant.weight}</td>
-                <td>${variant.assignmentsCount}</td>
-            </tr>
-        `).join('') || renderEmptyRow('No variants yet.', 4)
-        syncAnalyticsStats(stats, test)
-    } catch (error) {
-        dispatchHttpError(error, 'Unable to load AB test analytics.')
+            status.textContent = test.status
+            traffic.textContent = `${test.trafficPercent}%`
+            events.innerHTML = renderEventsSummary(test.analytics.eventsByName)
+            variants.innerHTML = test.variants.map((variant) => `
+                <tr>
+                    <td>${escapeHtml(variant.name)}</td>
+                    <td>${escapeHtml(variant.slug)}</td>
+                    <td>${variant.weight}</td>
+                    <td>${variant.assignmentsCount}</td>
+                </tr>
+            `).join('') || renderEmptyRow('No variants yet.', 4)
+            syncAnalyticsStats(stats, test)
+        } catch (error) {
+            dispatchHttpError(error, 'Unable to load AB test analytics.')
+        }
     }
 }
 
@@ -447,46 +570,23 @@ function renderPagination(page: number, totalPages: number): string {
     `
 }
 
-function bindPagination(
-    root: HTMLElement,
-    getState: () => AdminAbTestsQueryState,
-    onNavigate: (page: number) => Promise<void>,
-): void {
-    root.querySelectorAll<HTMLButtonElement>('[data-page-nav]').forEach((button) => {
-        button.addEventListener('click', async () => {
-            const currentPage = getState().page
-            const direction = button.dataset.pageNav === 'next' ? 1 : -1
-            await onNavigate(Math.max(1, currentPage + direction))
-        })
-    })
+function syncIndexPageState(root: HTMLElement, tableBody: HTMLElement, empty: HTMLElement): void {
+    if (tableBody.querySelector('[data-testid="ab-tests-table-row"]')) {
+        setPageReady(root)
+
+        return
+    }
+
+    if (!empty.classList.contains('is-hidden')) {
+        setPageEmpty(root)
+    }
 }
 
 function bindSimplePagination(root: HTMLElement, currentPage: number, onNavigate: (page: number) => Promise<void>): void {
     root.querySelectorAll<HTMLButtonElement>('[data-page-nav]').forEach((button) => {
-        button.addEventListener('click', async () => {
+        button.addEventListener('click', () => {
             const nextPage = button.dataset.pageNav === 'next' ? currentPage + 1 : Math.max(1, currentPage - 1)
-            await onNavigate(nextPage)
-        })
-    })
-}
-
-function bindSorting(
-    buttons: NodeListOf<HTMLButtonElement>,
-    getState: () => AdminAbTestsQueryState,
-    onSort: (sort: AdminAbTestsSortKey, direction: AdminAbTestsSortDirection) => Promise<void>,
-): void {
-    buttons.forEach((button) => {
-        button.addEventListener('click', async () => {
-            const sortKey = button.getAttribute('sort-key') as AdminAbTestsSortKey | null
-
-            if (!sortKey) {
-                return
-            }
-
-            const currentState = getState()
-            const nextDirection: AdminAbTestsSortDirection = currentState.sort === sortKey && currentState.direction === 'asc' ? 'desc' : 'asc'
-
-            await onSort(sortKey, nextDirection)
+            void onNavigate(nextPage)
         })
     })
 }
@@ -613,22 +713,40 @@ function renderEmptyRow(label: string, colspan: number): string {
     return `<tr><td colspan="${colspan}" class="admin-toolbar-meta">${escapeHtml(label)}</td></tr>`
 }
 
+function syncListPageState(root: HTMLElement, body: HTMLElement, empty: HTMLElement, rowSelector: string): void {
+    if (body.querySelector(rowSelector)) {
+        setPageReady(root)
+
+        return
+    }
+
+    if (!empty.classList.contains('is-hidden')) {
+        setPageEmpty(root)
+    }
+}
+
 function syncStats(nodes: NodeListOf<HTMLElement>, test: AdminAbTestManagementRecord): void {
     const totalEvents = Object.values(test.analytics.eventsByName).reduce((sum, count) => sum + count, 0)
 
     nodes.forEach((node) => {
+        const valueNode = node.querySelector<HTMLElement>('.admin-stat-card__value')
+
+        if (!valueNode) {
+            return
+        }
+
         switch (node.dataset.abTestStat) {
             case 'assignments':
-                node.querySelector('.admin-stat-card__value')!.textContent = String(test.analytics.assignmentsCount)
+                valueNode.textContent = String(test.analytics.assignmentsCount)
                 break
             case 'identified':
-                node.querySelector('.admin-stat-card__value')!.textContent = String(test.analytics.identifiedAssignmentsCount)
+                valueNode.textContent = String(test.analytics.identifiedAssignmentsCount)
                 break
             case 'variants':
-                node.querySelector('.admin-stat-card__value')!.textContent = String(test.variants.length)
+                valueNode.textContent = String(test.variants.length)
                 break
             case 'events':
-                node.querySelector('.admin-stat-card__value')!.textContent = String(totalEvents)
+                valueNode.textContent = String(totalEvents)
                 break
             default:
                 break
@@ -725,7 +843,7 @@ function bindVariantActions(
     pageRoot: HTMLElement,
     root: HTMLElement,
     variantsEndpoint: string,
-    onUpdated: (view: AdminAbTestManagementRecord) => Promise<void>,
+    onUpdated: (view: AdminAbTestManagementRecord) => void,
 ): void {
     const form = pageRoot.querySelector<HTMLFormElement>('[data-ab-test-variant-form]')
     const nameInput = pageRoot.querySelector<HTMLInputElement>('[data-ab-test-variant-input="name"]')
@@ -760,19 +878,21 @@ function bindVariantActions(
     })
 
     root.querySelectorAll<HTMLButtonElement>('[data-ab-test-variant-delete]').forEach((button) => {
-        button.addEventListener('click', async () => {
+        button.addEventListener('click', () => {
             const variantId = button.dataset.abTestVariantDelete
 
             if (!variantId) {
                 return
             }
 
-            try {
-                await onUpdated(await service.removeVariant(`${variantsEndpoint}/${variantId}`))
-                dispatchToast('success', 'Variant deleted.')
-            } catch (error) {
-                dispatchHttpError(error, 'Unable to delete the variant.')
-            }
+            void (async () => {
+                try {
+                    onUpdated(await service.removeVariant(`${variantsEndpoint}/${variantId}`))
+                    dispatchToast('success', 'Variant deleted.')
+                } catch (error) {
+                    dispatchHttpError(error, 'Unable to delete the variant.')
+                }
+            })()
         })
     })
 }

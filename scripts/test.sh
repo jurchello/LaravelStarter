@@ -2,21 +2,24 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HOST="${E2E_HOST:-127.0.0.1}"
-PORT="${E2E_PORT:-8011}"
 APP_ENVIRONMENT="${TEST_APP_ENV:-testing}"
+TEST_DB_CONNECTION="${TEST_DB_CONNECTION:-sqlite}"
+TEST_DB_DATABASE="${TEST_DB_DATABASE:-${ROOT_DIR}/database/database.sqlite}"
+TEST_CACHE_STORE="${TEST_CACHE_STORE:-array}"
+TEST_QUEUE_CONNECTION="${TEST_QUEUE_CONNECTION:-sync}"
+TEST_SESSION_DRIVER="${TEST_SESSION_DRIVER:-file}"
+TEST_MAIL_MAILER="${TEST_MAIL_MAILER:-array}"
 SKIP_UNIT_TESTS="${SKIP_UNIT_TESTS:-0}"
 SKIP_BACKEND_TESTS="${SKIP_BACKEND_TESTS:-0}"
-SKIP_E2E_TESTS="${SKIP_E2E_TESTS:-0}"
 
-cleanup() {
-    if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
-        kill "$SERVER_PID"
-        wait "$SERVER_PID" 2>/dev/null || true
+prepare_testing_database() {
+    if [[ "${APP_ENVIRONMENT}" != "testing" ]] || [[ "${TEST_DB_CONNECTION}" != "sqlite" ]]; then
+        return
     fi
-}
 
-trap cleanup EXIT INT TERM
+    mkdir -p "$(dirname "${TEST_DB_DATABASE}")"
+    touch "${TEST_DB_DATABASE}"
+}
 
 if [[ "$SKIP_UNIT_TESTS" != "1" ]]; then
     echo "Running Vitest unit tests..."
@@ -29,33 +32,14 @@ fi
 if [[ "$SKIP_BACKEND_TESTS" != "1" ]]; then
     echo "Running Laravel tests..."
     cd "$ROOT_DIR"
-    APP_ENV="$APP_ENVIRONMENT" php artisan test --env="$APP_ENVIRONMENT"
+    APP_ENV="$APP_ENVIRONMENT" \
+    DB_CONNECTION="${TEST_DB_CONNECTION}" \
+    DB_DATABASE="${TEST_DB_DATABASE}" \
+    CACHE_STORE="${TEST_CACHE_STORE}" \
+    QUEUE_CONNECTION="${TEST_QUEUE_CONNECTION}" \
+    SESSION_DRIVER="${TEST_SESSION_DRIVER}" \
+    MAIL_MAILER="${TEST_MAIL_MAILER}" \
+    php artisan test --env="$APP_ENVIRONMENT"
 else
     echo "Skipping Laravel tests (SKIP_BACKEND_TESTS=1)."
-fi
-
-if [[ "$SKIP_E2E_TESTS" != "1" ]]; then
-    while ss -ltn "( sport = :${PORT} )" | grep -q ":${PORT}"; do
-        PORT=$((PORT + 1))
-    done
-
-    if [[ "${PORT}" != "${E2E_PORT:-8011}" ]]; then
-        echo "Port ${E2E_PORT:-8011} is busy, using ${PORT} for e2e."
-    fi
-
-    echo "Starting Laravel server on ${HOST}:${PORT} (APP_ENV=${APP_ENVIRONMENT})..."
-    cd "$ROOT_DIR"
-    APP_ENV="$APP_ENVIRONMENT" php artisan config:clear > /tmp/app-e2e-config.log 2>&1 || true
-    APP_ENV="$APP_ENVIRONMENT" php artisan cache:clear >> /tmp/app-e2e-config.log 2>&1 || true
-    APP_ENV="$APP_ENVIRONMENT" php artisan serve --host="$HOST" --port="$PORT" --env="$APP_ENVIRONMENT" > /tmp/app-e2e-server.log 2>&1 &
-    SERVER_PID=$!
-
-    sleep 2
-
-    echo "Running Playwright tests..."
-    PLAYWRIGHT_REPORTER="${PLAYWRIGHT_REPORTER:-list}"
-    PLAYWRIGHT_WORKERS="${PLAYWRIGHT_WORKERS:-1}"
-    PLAYWRIGHT_BASE_URL="http://${HOST}:${PORT}" npx playwright test --reporter="${PLAYWRIGHT_REPORTER}" --workers="${PLAYWRIGHT_WORKERS}" "$@"
-else
-    echo "Skipping e2e tests (SKIP_E2E_TESTS=1)."
 fi

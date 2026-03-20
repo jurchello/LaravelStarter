@@ -43,10 +43,10 @@ test('low competition increases score', () => {
 
 Rules:
 - Test `service.ts` — it contains all logic
-- Do not test `bootstrap.ts` with unit tests — it is covered by Playwright
+- Do not test `bootstrap.ts` with unit tests
 - Mock `shared/http` clients in all unit tests
 
-### `data-testid` convention (mandatory for Playwright)
+### `data-testid` convention
 
 All interactive and key elements must have `data-testid`:
 
@@ -59,51 +59,19 @@ Examples:
 - `idea-card-analyze` — analyze button on an idea card
 - `report-modal-close` — close button in the report modal
 
-**Rule: add `data-testid` while writing the template — not after.** No `data-testid` → Playwright test cannot be written without fragile CSS selectors.
+**Rule: add `data-testid` while writing the template — not after.**
 
----
+### SSR + enhancement rule
 
-## Playwright (E2E)
+Admin and site pages that expose meaningful initial content must render that first content on the server.
 
-### Rules
+Rules:
 
-- **No `sleep()`** — use `waitForSelector`, `waitForResponse`, `waitForURL`
-- Selectors via `data-testid` — never via CSS classes or text content
-- Tests must be deterministic — seed known data in `global-setup.ts`
-- Each test is independent — no shared state between tests
-
-### Fixtures
-
-Use Playwright fixtures for repeated setup (authentication, base data):
-
-```ts
-// tests/e2e/fixtures.ts
-import { test as base } from '@playwright/test';
-
-export const test = base.extend({
-    authenticatedPage: async ({ page }, use) => {
-        await page.goto('/login');
-        await page.fill('[data-testid=login-email]', 'test@example.com');
-        await page.fill('[data-testid=login-password]', 'password');
-        await page.click('[data-testid=login-form-submit]');
-        await page.waitForURL('/dashboard');
-        await use(page);
-    },
-});
-```
-
-### Anti-patterns
-
-```ts
-// BAD
-await page.waitForTimeout(2000);
-await page.click('.btn-primary');
-await page.click('text=Submit');
-
-// GOOD
-await page.waitForSelector('[data-testid=report-ready]');
-await page.click('[data-testid=idea-card-analyze]');
-```
+- Blade renders the initial screen state
+- frontend modules enhance existing HTML after hydration
+- modules may fetch fresh data after bootstrap, but they must not depend on inline JSON payloads embedded into the page
+- API routes remain the source for incremental updates, filters, mutations, and refreshes
+- do not ship empty shell-only list pages when the first screen can be rendered on the server
 
 ---
 
@@ -136,7 +104,6 @@ Rules:
 | ESLint (strict) | TS code quality | CI, pre-commit |
 | Prettier | TS/CSS formatting | Pre-commit |
 | Vitest | Unit tests for frontend | CI |
-| Playwright | E2E tests | CI |
 | PHPUnit | Backend tests | CI |
 
 ---
@@ -234,13 +201,3 @@ const service = new I18nService('uk', { hello: 'Привіт' })
 | `any` type in TypeScript | Define a proper interface |
 | `setModuleState()` / `resetX()` for tests | Class-based service; tests use `new Service()` |
 | Module-level `let state = ...` | Private instance field in the service class |
-
-### Playwright
-
-| Anti-pattern | What to do instead |
-|---|---|
-| `waitForTimeout(2000)` | `waitForSelector` / `waitForResponse` |
-| CSS class selectors | `data-testid` |
-| Text content selectors | `data-testid` |
-| Tests depend on execution order | Reset state in `beforeEach` or use fixtures |
-| Hardcoded user data | Seed via `global-setup.ts` |

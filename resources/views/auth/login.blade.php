@@ -3,6 +3,11 @@
 @section('title', 'Log in')
 
 @section('content')
+    <x-site.page
+        data-site-page="login"
+        data-page-state="ready"
+        data-testid="site-login-page"
+    >
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
             <x-site.card padded>
@@ -65,4 +70,5 @@
             </x-site.card>
         </div>
     </div>
+    </x-site.page>
 @endsection

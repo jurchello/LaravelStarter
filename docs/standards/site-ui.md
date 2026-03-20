@@ -6,6 +6,8 @@
 - Public/auth pages must not depend on API-loaded content for core SEO-visible content.
 - Authentication screens, landing pages, and account overview pages are server-rendered first.
 - Site pages are SSR-first even when enhanced by JavaScript.
+- Every site page must declare `data-site-page`.
+- Every site page must declare `data-page-state` for the initial server-rendered state.
 
 ## Components
 
@@ -31,7 +33,7 @@
 ## Interactivity
 
 - Public pages may enhance UX with JS, but must remain correct without API hydration.
-- Private/admin pages may use shell + API rendering when the interface is operational rather than SEO-oriented.
+- Site JS enhances existing HTML after bootstrap; it must not create the first visible screen from scratch.
 - Transient feedback on public/auth pages must use toast notifications instead of inline success/info/error blocks that shift the layout.
 
 ## Special rules

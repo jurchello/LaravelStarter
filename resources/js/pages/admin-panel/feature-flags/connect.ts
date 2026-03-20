@@ -1,5 +1,9 @@
 import { emitNotify } from '@/modules/toast/service'
 import {
+    connectPageModules,
+    definePageModule,
+} from '@/pages/module-connect'
+import {
     AdminFeatureFlagsService,
     type AdminFeatureFlagPayload,
     type AdminFeatureFlagRecord,
@@ -7,11 +11,23 @@ import {
     type AdminFeatureFlagsSortDirection,
     type AdminFeatureFlagsSortKey,
 } from '@/modules/admin-feature-flags/service'
+import {
+    setPageEmpty,
+    setPageError,
+    setPageLoading,
+    setPageReady,
+} from '@/shared/runtime-state/module'
 
 const service = new AdminFeatureFlagsService()
 const SEARCH_DEBOUNCE_MS = 250
 
-export async function initAdminFeatureFlagsPage(root: HTMLElement): Promise<void> {
+export function connectAdminFeatureFlagsPage(root: HTMLElement): Promise<void> {
+    return connectPageModules([
+        definePageModule('admin-feature-flags', () => bootstrapAdminFeatureFlagsPage(root)),
+    ])
+}
+
+async function bootstrapAdminFeatureFlagsPage(root: HTMLElement): Promise<void> {
     const endpoint = root.dataset.featureFlagsEndpoint
     const suggestionsEndpoint = root.dataset.featureFlagsSuggestionsEndpoint
     const currentSort = (root.dataset.featureFlagsSort as AdminFeatureFlagsSortKey | undefined) ?? 'name'
@@ -60,6 +76,7 @@ export async function initAdminFeatureFlagsPage(root: HTMLElement): Promise<void
     let state = getInitialState(currentSort, currentDirection, searchInput.value, statusSelect.value)
     let searchTimer: number | null = null
     let suggestionRequestId = 0
+    let currentItems: AdminFeatureFlagRecord[] = []
 
     const resetForm = (): void => {
         formId.value = ''
@@ -71,56 +88,108 @@ export async function initAdminFeatureFlagsPage(root: HTMLElement): Promise<void
         formSubmit.textContent = 'Save flag'
     }
 
-    const render = async (): Promise<void> => {
-        const result = await service.load(endpoint, state)
+    syncSortButtons(sortButtons, state)
+    syncRootState(root, tableBody, empty)
 
-        tableBody.innerHTML = result.items.map(renderRow).join('')
-        empty.classList.toggle('is-hidden', result.items.length > 0)
-        summary.textContent = `${result.total} total flags`
-        pagination.innerHTML = renderPagination(result.page, result.totalPages)
-        syncSortButtons(sortButtons, state)
-        syncUrl(state)
-        bindRowActions(tableBody, result.items, formId, formKey, formName, formDescription, formEnabled, formRollout, formSubmit, endpoint, render)
-        bindPagination(pagination, () => state, async (page) => {
-            state = { ...state, page }
-            await render()
-        })
-    }
-
-    await render()
-
-    bindSorting(sortButtons, () => state, async (sort, direction) => {
-        state = { ...state, sort, direction, page: 1 }
-        await render()
-    })
-
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault()
-
-        const payload = readPayload(formKey, formName, formDescription, formEnabled, formRollout)
-
-        if (formId.value === '') {
-            await service.create(endpoint, payload)
-            emitNotify({ type: 'success', message: 'Feature flag created.' })
-        } else {
-            await service.update(endpoint, Number(formId.value), payload)
-            emitNotify({ type: 'success', message: 'Feature flag updated.' })
+    const hydrateCurrentPageData = async (): Promise<void> => {
+        if (currentItems.length > 0 || emptyIsVisible(empty)) {
+            return
         }
 
-        resetForm()
-        await render()
+        const result = await service.load(endpoint, state)
+
+        currentItems = result.items
+    }
+
+    const refresh = async (): Promise<void> => {
+        setPageLoading(root)
+
+        try {
+            const result = await service.load(endpoint, state)
+
+            applyFeatureFlagsResult(result, {
+                root,
+                tableBody,
+                pagination,
+                summary,
+                empty,
+                sortButtons,
+            }, state)
+            currentItems = result.items
+        } catch {
+            setPageError(root)
+            emitNotify({
+                type: 'error',
+                message: 'Unable to refresh feature flags right now.',
+            })
+        }
+    }
+
+    pagination.addEventListener('click', (event) => {
+        const target = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>('[data-page-nav]')
+
+        if (!target) {
+            return
+        }
+
+        void (async () => {
+            const currentPage = state.page
+            const direction = target.dataset.pageNav === 'next' ? 1 : -1
+
+            state = { ...state, page: Math.max(1, currentPage + direction) }
+            await refresh()
+        })()
+    })
+
+    sortButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const sortKey = button.getAttribute('sort-key') as AdminFeatureFlagsSortKey | null
+
+            if (!sortKey) {
+                return
+            }
+
+            void (async () => {
+                const nextDirection: AdminFeatureFlagsSortDirection =
+                    state.sort === sortKey && state.direction === 'asc' ? 'desc' : 'asc'
+
+                state = { ...state, sort: sortKey, direction: nextDirection, page: 1 }
+                await refresh()
+            })()
+        })
+    })
+
+    form.addEventListener('submit', (event) => {
+        event.preventDefault()
+
+        void (async () => {
+            const payload = readPayload(formKey, formName, formDescription, formEnabled, formRollout)
+
+            if (formId.value === '') {
+                await service.create(endpoint, payload)
+                emitNotify({ type: 'success', message: 'Feature flag created.' })
+            } else {
+                await service.update(endpoint, Number(formId.value), payload)
+                emitNotify({ type: 'success', message: 'Feature flag updated.' })
+            }
+
+            resetForm()
+            await refresh()
+        })()
     })
 
     formCancel.addEventListener('click', () => {
         resetForm()
     })
 
-    statusSelect.addEventListener('change', async () => {
-        state = { ...state, status: statusSelect.value, page: 1 }
-        await render()
+    statusSelect.addEventListener('change', () => {
+        void (async () => {
+            state = { ...state, status: statusSelect.value, page: 1 }
+            await refresh()
+        })()
     })
 
-    searchInput.addEventListener('input', async () => {
+    searchInput.addEventListener('input', () => {
         if (searchTimer) {
             window.clearTimeout(searchTimer)
         }
@@ -142,10 +211,56 @@ export async function initAdminFeatureFlagsPage(root: HTMLElement): Promise<void
             suggestionsList.innerHTML = ''
         }
 
-        searchTimer = window.setTimeout(async () => {
+        searchTimer = window.setTimeout(() => {
             state = { ...state, search: query, page: 1 }
-            await render()
+            void refresh()
         }, SEARCH_DEBOUNCE_MS)
+    })
+
+    tableBody.addEventListener('click', (event) => {
+        const target = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>('button')
+
+        if (!target) {
+            return
+        }
+
+        void (async () => {
+            const editId = Number(target.dataset.featureFlagEdit)
+
+            if (editId > 0) {
+                await hydrateCurrentPageData()
+
+                const flag = currentItems.find((item) => item.id === editId)
+
+                if (!flag) {
+                    emitNotify({
+                        type: 'error',
+                        message: 'Unable to load the selected feature flag.',
+                    })
+
+                    return
+                }
+
+                formId.value = String(flag.id)
+                formKey.value = flag.key
+                formName.value = flag.name
+                formDescription.value = flag.description ?? ''
+                formEnabled.value = flag.enabled ? '1' : '0'
+                formRollout.value = String(flag.rolloutPercent)
+                formSubmit.textContent = 'Update flag'
+                formKey.focus()
+
+                return
+            }
+
+            const deleteId = Number(target.dataset.featureFlagDelete)
+
+            if (deleteId > 0) {
+                await service.delete(endpoint, deleteId)
+                emitNotify({ type: 'success', message: 'Feature flag deleted.' })
+                await refresh()
+            }
+        })()
     })
 }
 
@@ -165,48 +280,25 @@ function readPayload(
     }
 }
 
-function bindRowActions(
-    root: HTMLElement,
-    items: AdminFeatureFlagRecord[],
-    formId: HTMLInputElement,
-    formKey: HTMLInputElement,
-    formName: HTMLInputElement,
-    formDescription: HTMLTextAreaElement,
-    formEnabled: HTMLSelectElement,
-    formRollout: HTMLInputElement,
-    formSubmit: HTMLButtonElement,
-    endpoint: string,
-    rerender: () => Promise<void>,
+function applyFeatureFlagsResult(
+    result: Awaited<ReturnType<AdminFeatureFlagsService['load']>>,
+    elements: {
+        root: HTMLElement
+        tableBody: HTMLElement
+        pagination: HTMLElement
+        summary: HTMLElement
+        empty: HTMLElement
+        sortButtons: NodeListOf<HTMLButtonElement>
+    },
+    state: AdminFeatureFlagsQueryState,
 ): void {
-    root.querySelectorAll<HTMLButtonElement>('[data-feature-flag-edit]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const id = Number(button.dataset.featureFlagEdit)
-            const flag = items.find((item) => item.id === id)
-
-            if (!flag) {
-                return
-            }
-
-            formId.value = String(flag.id)
-            formKey.value = flag.key
-            formName.value = flag.name
-            formDescription.value = flag.description ?? ''
-            formEnabled.value = flag.enabled ? '1' : '0'
-            formRollout.value = String(flag.rolloutPercent)
-            formSubmit.textContent = 'Update flag'
-            formKey.focus()
-        })
-    })
-
-    root.querySelectorAll<HTMLButtonElement>('[data-feature-flag-delete]').forEach((button) => {
-        button.addEventListener('click', async () => {
-            const id = Number(button.dataset.featureFlagDelete)
-
-            await service.delete(endpoint, id)
-            emitNotify({ type: 'success', message: 'Feature flag deleted.' })
-            await rerender()
-        })
-    })
+    elements.tableBody.innerHTML = result.items.map(renderRow).join('')
+    elements.empty.classList.toggle('is-hidden', result.items.length > 0)
+    elements.summary.textContent = `${result.total} total flags`
+    elements.pagination.innerHTML = renderPagination(result.page, result.totalPages)
+    syncSortButtons(elements.sortButtons, state)
+    syncUrl(state)
+    syncRootState(elements.root, elements.tableBody, elements.empty)
 }
 
 function renderRow(flag: AdminFeatureFlagRecord): string {
@@ -237,43 +329,6 @@ function renderPagination(page: number, totalPages: number): string {
             <button class="admin-button admin-button--primary" data-page-nav="next" ${page >= totalPages ? 'disabled' : ''}>Next</button>
         </div>
     `
-}
-
-function bindPagination(
-    root: HTMLElement,
-    getState: () => AdminFeatureFlagsQueryState,
-    onNavigate: (page: number) => Promise<void>,
-): void {
-    root.querySelectorAll<HTMLButtonElement>('[data-page-nav]').forEach((button) => {
-        button.addEventListener('click', async () => {
-            const currentPage = getState().page
-            const direction = button.dataset.pageNav === 'next' ? 1 : -1
-
-            await onNavigate(Math.max(1, currentPage + direction))
-        })
-    })
-}
-
-function bindSorting(
-    buttons: NodeListOf<HTMLButtonElement>,
-    getState: () => AdminFeatureFlagsQueryState,
-    onSort: (sort: AdminFeatureFlagsSortKey, direction: AdminFeatureFlagsSortDirection) => Promise<void>,
-): void {
-    buttons.forEach((button) => {
-        button.addEventListener('click', async () => {
-            const sortKey = button.getAttribute('sort-key') as AdminFeatureFlagsSortKey | null
-
-            if (!sortKey) {
-                return
-            }
-
-            const currentState = getState()
-            const nextDirection: AdminFeatureFlagsSortDirection =
-                currentState.sort === sortKey && currentState.direction === 'asc' ? 'desc' : 'asc'
-
-            await onSort(sortKey, nextDirection)
-        })
-    })
 }
 
 function getInitialState(
@@ -325,6 +380,22 @@ function syncSortButtons(buttons: NodeListOf<HTMLButtonElement>, state: AdminFea
         button.classList.toggle('is-asc', isActive && state.direction === 'asc')
         button.classList.toggle('is-desc', isActive && state.direction === 'desc')
     })
+}
+
+function syncRootState(root: HTMLElement, tableBody: HTMLElement, empty: HTMLElement): void {
+    if (tableBody.querySelector('[data-testid="feature-flags-table-row"]')) {
+        setPageReady(root)
+
+        return
+    }
+
+    if (!empty.classList.contains('is-hidden')) {
+        setPageEmpty(root)
+    }
+}
+
+function emptyIsVisible(empty: HTMLElement): boolean {
+    return !empty.classList.contains('is-hidden')
 }
 
 function escapeHtml(value: string): string {

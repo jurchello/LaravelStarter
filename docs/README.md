@@ -17,7 +17,7 @@
 - `ai/start.md` — **start here** (AI navigation, mandatory reading list)
 - `standards/conventions.md` — coding conventions (language, PHP, TypeScript, naming, git)
 - `standards/project-context.md` — product overview and key domains
-- `standards/testing-standards.md` — testing rules for backend, frontend, and Playwright
+- `standards/testing-standards.md` — testing rules for backend and frontend
 - `standards/dto-examples.md` — DTO patterns with plain readonly objects
 - `architecture/ddd.md` — DDD layers, patterns, anti-patterns, architectural tests
 - `architecture/frontend.md` — frontend structure, module lifecycle, testability rules

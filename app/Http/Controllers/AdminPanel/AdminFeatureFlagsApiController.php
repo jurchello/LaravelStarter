@@ -50,7 +50,7 @@ final class AdminFeatureFlagsApiController extends Controller
                 'page' => $result->currentPage,
                 'perPage' => $result->perPage,
                 'total' => $result->total,
-                'totalPages' => (int) ceil($result->total / max(1, $result->perPage)),
+                'totalPages' => max(1, (int) ceil($result->total / max(1, $result->perPage))),
             ]),
         );
     }

@@ -8,7 +8,7 @@
 - **Cache / Queues / Sessions:** Redis
 - **Server:** Nginx + PHP-FPM (Docker)
 - **Static analysis:** PHPStan (larastan), ESLint
-- **Tests:** PHPUnit, Playwright (e2e)
+- **Tests:** PHPUnit, Vitest
 - **DTO:** plain `readonly` DTO classes
 - **Feature flags runtime:** Laravel Pennant
 

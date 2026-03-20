@@ -8,24 +8,30 @@ use App\Models\FeatureFlag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Pennant\Feature;
+use Tests\Concerns\DisablesCsrfForWebMutations;
 use Tests\TestCase;
 
 final class AdminFeatureFlagManagementTest extends TestCase
 {
+    use DisablesCsrfForWebMutations;
     use RefreshDatabase;
 
-    public function test_admin_feature_flags_page_renders_shell_only(): void
+    public function test_admin_feature_flags_page_renders_server_side_initial_state(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
+        $flag = FeatureFlag::factory()->create(['key' => 'new-dashboard', 'name' => 'New Dashboard']);
 
         $response = $this->actingAs($admin)->get('/management/feature-flags');
 
         $response->assertOk()
             ->assertViewIs('admin-panel.feature-flags.index')
             ->assertSee('data-admin-page="feature-flags"', false)
+            ->assertSee('data-page-state="ready"', false)
             ->assertSee('data-feature-flags-endpoint="/management/api/feature-flags"', false)
             ->assertSee('data-feature-flags-suggestions-endpoint="/management/api/feature-flags/suggestions"', false)
-            ->assertDontSee('feature-flags-table-row');
+            ->assertSee('feature-flags-table-row', false)
+            ->assertSee($flag->key)
+            ->assertSee($flag->name);
     }
 
     public function test_admin_feature_flags_api_returns_paginated_envelope(): void

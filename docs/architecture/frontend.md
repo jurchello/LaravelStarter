@@ -29,7 +29,18 @@ The only place allowed to:
 - Call `service.ts`
 - Apply results back to the UI
 
-No business rules here. Tested via Playwright (e2e) or feature coverage around the surrounding flow.
+No business rules here. Tested via feature coverage around the surrounding flow.
+
+### Server-rendered initial content
+
+Blade must deliver the first meaningful screen state whenever the page can be rendered on the server.
+
+- Controllers prepare the initial read model
+- Blade renders the initial HTML
+- TypeScript enhances that HTML after bootstrap
+- TypeScript may fetch newer data after bootstrap, but it must not require inline JSON islands from the page to start
+
+This keeps first paint meaningful and improves resilience without JavaScript.
 
 ### `shared/http/` — HTTP client
 
@@ -46,7 +57,8 @@ Initialised synchronously before the orchestrator starts — no module may creat
 ```
 resources/js/
 ├── core/
-│   └── connect.ts              ← module orchestrator
+│   ├── connect.ts              ← system-module orchestrator
+│   └── module-connect.ts       ← shared module-spec runner
 ├── modules/                    ← feature modules
 │   └── {feature}/
 │       ├── init.ts             ← exports init(), integrate(), defer()
@@ -58,8 +70,10 @@ resources/js/
 ├── shared/
 │   └── http/                   ← webClient, apiClient (see clients.ts)
 └── pages/
-    └── {page}/
-        └── connect.ts          ← declarative module list for this page
+    ├── connect.ts              ← page orchestrator (routes to the current page)
+    ├── module-connect.ts       ← page-module adapter over the shared module runner
+    └── {surface}/{page}/
+        └── connect.ts          ← page-module orchestrator for one page
 ```
 
 ---
@@ -81,7 +95,14 @@ resources/js/
 
 ## Module lifecycle
 
-System modules may still use `init.ts`, but page-level admin and site flows are allowed to bootstrap directly from `pages/.../connect.ts` when that keeps the boundary thinner.
+The frontend has two explicit orchestration layers and both use the same module-connection pattern:
+
+- `core/connect.ts` orchestrates system modules
+- `pages/{surface}/{page}/connect.ts` orchestrates page modules
+
+The difference is only scope, not orchestration style.
+
+System modules may still use `init.ts`, but page-level admin and site flows bootstrap through page `connect.ts` files that use the same module-spec runner.
 
 Reusable modules may export up to three functions from `init.ts`:
 
@@ -91,7 +112,15 @@ export const integrate = (): void => { /* wire events via bootstrap.ts */ }
 export const defer = (): void => { /* optional: non-critical lazy work */ }
 ```
 
-The orchestrator calls modules respecting `dependsOn` order, then runs `defer()` after all modules are ready.
+Both orchestration layers call modules respecting `dependsOn` order, then run `defer()` after all modules are ready.
+
+Shared runtime readiness is tracked separately from browser lifecycle:
+
+- browser `DOMContentLoaded` starts bootstrap
+- `data-app-state="booting"` is the earliest app lifecycle state
+- `data-app-state="basic-ready"` is reached after system bootstrap
+- `data-app-state="final-ready"` is reached after entrypoint/page bootstrap completes
+- `data-page-state` is owned by the current page root and tracks `idle`, `loading`, `ready`, `empty`, or `error`
 
 ---
 
@@ -103,7 +132,7 @@ Three modules are auto-loaded on every page by the orchestrator. Do not list the
 |--------|----------|
 | `i18n` | `modules/i18n/` |
 | `toast` | `modules/toast/` |
-| `shared/http` | `shared/http/` (initialised before orchestrator, not in runModules) |
+| `shared/http` | `shared/http/` (initialised before the module runner, not modeled as a module spec) |
 
 The shared `toast` module is the canonical transient-feedback channel for both site and admin surfaces.
 Do not add page-local inline success/info/error messaging for event-driven feedback when a toast is appropriate.
@@ -111,23 +140,47 @@ For the template baseline, the `site` surface is Bootstrap-neutral: reusable vie
 
 ---
 
+## Two-stage bootstrap
+
+Every browser entrypoint follows the same order:
+
+1. `DOMContentLoaded`
+2. `core/connect.ts` connects system modules
+3. `pages/connect.ts` locates the current page root and dispatches to one page `connect.ts`
+4. the selected page `connect.ts` connects that page's modules
+5. only then may the app emit `final-ready`
+
+This keeps site and admin surfaces structurally identical.
+
 ## Per-page connect.ts
 
-Two page-entry styles are allowed:
+Page `connect.ts` files are not special-case scripts; they are page-scoped module orchestrators built on the same pattern as the system orchestrator.
 
-- declarative module registration through `connectModules(...)`
-- direct page-specific bootstrap such as `initAdminUsersPage(root)`
+Rules:
 
-In both styles the rule is the same: DOM wiring belongs here, not in `service.ts`.
+- one page `connect.ts` per page surface
+- page `connect.ts` owns only that page's modules
+- DOM wiring belongs here, not in `service.ts`
+- if a page has no active JS modules yet, it still keeps its own `connect.ts` as the stable orchestration boundary
+- do not bypass the page orchestrator from entrypoints with ad hoc per-page `switch` logic
+
+Page connectors own page readiness:
+
+- mark page `loading` before async page bootstrap
+- mark page `ready`, `empty`, or `error` after the initial page result is known
+- do not mark global app `final-ready` before page bootstrap completes
 
 ```ts
-// pages/ideas/connect.ts
-import { connectModules } from '@/core/connect'
-import * as ideas from '@/modules/ideas/init'
+// pages/site/login/connect.ts
+import { connectPageModules, definePageModule } from '@/pages/module-connect'
 
-connectModules([
-    { id: 'ideas', ...ideas },
-])
+export function connectSiteLoginPage(root: HTMLElement): Promise<void> {
+    return connectPageModules([
+        definePageModule('site-login', () => {
+            // page-specific DOM wiring and async enhancement
+        }),
+    ])
+}
 ```
 
 ---
@@ -147,6 +200,5 @@ connect.ts / bootstrap.ts  →  shared/types/
 |------|------|-----------------|
 | `service.ts` logic | Vitest | No |
 | DOM-aware integration helpers | Vitest + jsdom when needed | No (jsdom) |
-| Full user flow | Playwright | Yes |
 
 `bootstrap.ts` and page `connect.ts` are not the place for business logic. If logic or HTTP contract parsing ends up there, move it to `service.ts`.

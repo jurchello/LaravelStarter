@@ -6,6 +6,7 @@ namespace Tests\Feature\Auth;
 
 use App\Infrastructure\Auth\Notifications\QueuedResetPasswordNotification;
 use App\Models\User;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
@@ -16,11 +17,21 @@ final class PasswordResetTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutMiddleware(PreventRequestForgery::class);
+    }
+
     public function test_reset_password_link_screen_can_be_rendered(): void
     {
         $response = $this->get(route('password.request'));
 
-        $response->assertOk();
+        $response->assertOk()
+            ->assertSee('data-site-page="forgot-password"', false)
+            ->assertSee('data-page-state="ready"', false)
+            ->assertSee('data-testid="site-forgot-password-page"', false);
     }
 
     public function test_reset_password_link_can_be_requested(): void
@@ -67,7 +78,10 @@ final class PasswordResetTest extends TestCase
 
         $response = $this->get(route('password.reset', ['token' => $token, 'email' => $user->email]));
 
-        $response->assertOk();
+        $response->assertOk()
+            ->assertSee('data-site-page="reset-password"', false)
+            ->assertSee('data-page-state="ready"', false)
+            ->assertSee('data-testid="site-reset-password-page"', false);
     }
 
     public function test_password_can_be_reset_with_a_valid_token(): void

@@ -1,18 +1,25 @@
 @extends('admin-panel.layouts.admin')
 
+@php
+    $hasFlags = count($flags->items) > 0;
+    $pageState = $hasFlags ? 'ready' : 'empty';
+@endphp
+
 @section('content')
     <x-admin.page
         class="admin-page"
         data-admin-page="feature-flags"
+        data-page-state="{{ $pageState }}"
+        aria-busy="false"
         data-feature-flags-endpoint="{{ route('admin.api.feature-flags.index', absolute: false) }}"
         data-feature-flags-suggestions-endpoint="{{ route('admin.api.feature-flags.suggestions', absolute: false) }}"
-        data-feature-flags-sort="{{ request('sort', 'name') }}"
-        data-feature-flags-direction="{{ request('direction', 'asc') }}"
+        data-feature-flags-sort="{{ $query->sortBy }}"
+        data-feature-flags-direction="{{ $query->direction }}"
         data-testid="admin-feature-flags-page"
     >
         <x-admin.page-header
             title="Feature Flags"
-            subtitle="Operational feature switches with rollout percentage loaded from the admin API."
+            subtitle="Server-rendered operational flags with API-powered filtering and mutations."
         />
 
         <x-admin.filter-section title="Filters" data-feature-flags-filter-section>
@@ -21,7 +28,7 @@
                     id="feature-flags-search"
                     name="search"
                     placeholder="Search by key or name"
-                    :value="request('search')"
+                    :value="$query->search"
                     list-id="feature-flags-search-suggestions"
                     autocomplete="off"
                 >
@@ -34,9 +41,9 @@
                     aria-label="Filter by status"
                     data-feature-flags-status-filter
                 >
-                    <option value="all" @selected(request('status', 'all') === 'all')>All flags</option>
-                    <option value="enabled" @selected(request('status') === 'enabled')>Enabled</option>
-                    <option value="disabled" @selected(request('status') === 'disabled')>Disabled</option>
+                    <option value="all" @selected($query->status === 'all')>All flags</option>
+                    <option value="enabled" @selected($query->status === 'enabled')>Enabled</option>
+                    <option value="disabled" @selected($query->status === 'disabled')>Disabled</option>
                 </x-admin.select>
             </x-admin.table-filters>
         </x-admin.filter-section>
@@ -111,7 +118,7 @@
 
         <x-admin.surface padded>
             <x-admin.toolbar title="All Flags">
-                <span data-feature-flags-summary data-testid="feature-flags-summary"></span>
+                <span data-feature-flags-summary data-testid="feature-flags-summary">{{ $flags->total }} total flags</span>
             </x-admin.toolbar>
 
             <x-admin.table data-testid="feature-flags-table">
@@ -121,8 +128,8 @@
                             <x-admin.sort-button
                                 data-feature-flags-sort-trigger
                                 sort-key="id"
-                                :active="request('sort') === 'id'"
-                                :direction="request('sort') === 'id' ? request('direction') : null"
+                                :active="$query->sortBy === 'id'"
+                                :direction="$query->sortBy === 'id' ? $query->direction : null"
                             >
                                 ID
                             </x-admin.sort-button>
@@ -131,8 +138,8 @@
                             <x-admin.sort-button
                                 data-feature-flags-sort-trigger
                                 sort-key="key"
-                                :active="request('sort') === 'key'"
-                                :direction="request('sort') === 'key' ? request('direction') : null"
+                                :active="$query->sortBy === 'key'"
+                                :direction="$query->sortBy === 'key' ? $query->direction : null"
                             >
                                 Key
                             </x-admin.sort-button>
@@ -141,8 +148,8 @@
                             <x-admin.sort-button
                                 data-feature-flags-sort-trigger
                                 sort-key="name"
-                                :active="request('sort', 'name') === 'name'"
-                                :direction="request('sort', 'name') === 'name' ? request('direction', 'asc') : null"
+                                :active="$query->sortBy === 'name'"
+                                :direction="$query->sortBy === 'name' ? $query->direction : null"
                             >
                                 Name
                             </x-admin.sort-button>
@@ -151,8 +158,8 @@
                             <x-admin.sort-button
                                 data-feature-flags-sort-trigger
                                 sort-key="enabled"
-                                :active="request('sort') === 'enabled'"
-                                :direction="request('sort') === 'enabled' ? request('direction') : null"
+                                :active="$query->sortBy === 'enabled'"
+                                :direction="$query->sortBy === 'enabled' ? $query->direction : null"
                             >
                                 Status
                             </x-admin.sort-button>
@@ -161,8 +168,8 @@
                             <x-admin.sort-button
                                 data-feature-flags-sort-trigger
                                 sort-key="rolloutPercent"
-                                :active="request('sort') === 'rolloutPercent'"
-                                :direction="request('sort') === 'rolloutPercent' ? request('direction') : null"
+                                :active="$query->sortBy === 'rolloutPercent'"
+                                :direction="$query->sortBy === 'rolloutPercent' ? $query->direction : null"
                             >
                                 Rollout
                             </x-admin.sort-button>
@@ -170,18 +177,25 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody data-feature-flags-table-body></tbody>
+                <tbody data-feature-flags-table-body>
+                    @include('admin-panel.feature-flags.partials.rows', ['flags' => $flags->items])
+                </tbody>
             </x-admin.table>
 
             <x-admin.empty-state
-                class="is-hidden"
+                class="{{ $hasFlags ? 'is-hidden' : '' }}"
                 title="No feature flags found"
                 description="The current filter returned no flags."
                 data-feature-flags-empty
                 data-testid="feature-flags-empty"
             />
 
-            <x-admin.pagination data-feature-flags-pagination data-testid="feature-flags-pagination" />
+            <x-admin.pagination data-feature-flags-pagination data-testid="feature-flags-pagination">
+                @include('admin-panel.feature-flags.partials.pagination', [
+                    'currentPage' => $flags->currentPage,
+                    'totalPages' => $totalPages,
+                ])
+            </x-admin.pagination>
         </x-admin.surface>
     </x-admin.page>
 @endsection

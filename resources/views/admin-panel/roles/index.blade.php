@@ -1,19 +1,26 @@
 @extends('admin-panel.layouts.admin')
 
+@php
+    $hasRoles = count($roles->items) > 0;
+    $pageState = $hasRoles ? 'ready' : 'empty';
+@endphp
+
 @section('content')
     <x-admin.page
         class="admin-page"
         data-admin-page="roles"
+        data-page-state="{{ $pageState }}"
+        aria-busy="false"
         data-roles-endpoint="{{ route('admin.api.roles.index', absolute: false) }}"
         data-roles-suggestions-endpoint="{{ route('admin.api.roles.suggestions', absolute: false) }}"
         data-roles-permission-update-base="{{ url('/management/api/roles') }}"
-        data-roles-sort="{{ request('sort', 'name') }}"
-        data-roles-direction="{{ request('direction', 'asc') }}"
+        data-roles-sort="{{ $query->sortBy }}"
+        data-roles-direction="{{ $query->direction }}"
         data-testid="admin-roles-page"
     >
         <x-admin.page-header
             title="Roles"
-            subtitle="Session-authenticated role management loaded from the admin API."
+            subtitle="Server-rendered role management with API-powered editing and permission updates."
         />
 
         <x-admin.filter-section title="Filters" data-roles-filter-section>
@@ -22,7 +29,7 @@
                     id="roles-search"
                     name="search"
                     placeholder="Search by role name"
-                    :value="request('search')"
+                    :value="$query->search"
                     list-id="roles-search-suggestions"
                     autocomplete="off"
                 >
@@ -57,7 +64,7 @@
 
         <x-admin.surface padded>
             <x-admin.toolbar title="All Roles">
-                <span data-roles-summary data-testid="roles-summary"></span>
+                <span data-roles-summary data-testid="roles-summary">{{ $roles->total }} total roles</span>
             </x-admin.toolbar>
 
             <x-admin.table data-testid="roles-table">
@@ -67,8 +74,8 @@
                             <x-admin.sort-button
                                 data-roles-sort-trigger
                                 sort-key="id"
-                                :active="request('sort') === 'id'"
-                                :direction="request('sort') === 'id' ? request('direction') : null"
+                                :active="$query->sortBy === 'id'"
+                                :direction="$query->sortBy === 'id' ? $query->direction : null"
                             >
                                 ID
                             </x-admin.sort-button>
@@ -77,8 +84,8 @@
                             <x-admin.sort-button
                                 data-roles-sort-trigger
                                 sort-key="name"
-                                :active="request('sort', 'name') === 'name'"
-                                :direction="request('sort', 'name') === 'name' ? request('direction', 'asc') : null"
+                                :active="$query->sortBy === 'name'"
+                                :direction="$query->sortBy === 'name' ? $query->direction : null"
                             >
                                 Name
                             </x-admin.sort-button>
@@ -87,8 +94,8 @@
                             <x-admin.sort-button
                                 data-roles-sort-trigger
                                 sort-key="usersCount"
-                                :active="request('sort') === 'usersCount'"
-                                :direction="request('sort') === 'usersCount' ? request('direction') : null"
+                                :active="$query->sortBy === 'usersCount'"
+                                :direction="$query->sortBy === 'usersCount' ? $query->direction : null"
                             >
                                 Users
                             </x-admin.sort-button>
@@ -97,18 +104,25 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody data-roles-table-body></tbody>
+                <tbody data-roles-table-body>
+                    @include('admin-panel.roles.partials.rows', ['roles' => $roles->items])
+                </tbody>
             </x-admin.table>
 
             <x-admin.empty-state
-                class="is-hidden"
+                class="{{ $hasRoles ? 'is-hidden' : '' }}"
                 title="No roles found"
                 description="The current filter returned no roles."
                 data-roles-empty
                 data-testid="roles-empty"
             />
 
-            <x-admin.pagination data-roles-pagination data-testid="roles-pagination" />
+            <x-admin.pagination data-roles-pagination data-testid="roles-pagination">
+                @include('admin-panel.roles.partials.pagination', [
+                    'currentPage' => $roles->currentPage,
+                    'totalPages' => $totalPages,
+                ])
+            </x-admin.pagination>
         </x-admin.surface>
 
         <x-admin.modal title="Edit role permissions" data-roles-permissions-modal>

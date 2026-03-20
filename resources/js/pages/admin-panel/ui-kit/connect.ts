@@ -1,12 +1,22 @@
 import { Chart } from 'chart.js/auto'
 
 import { buildUiKitChartConfig } from '@/modules/admin-ui-kit-charts/service'
+import {
+    connectPageModules,
+    definePageModule,
+} from '@/pages/module-connect'
 
 type UiKitChartKind = 'line' | 'area' | 'bar' | 'histogram' | 'pie' | 'donut' | 'sparkline'
 
 const kinds: UiKitChartKind[] = ['line', 'area', 'bar', 'histogram', 'pie', 'donut', 'sparkline']
 
-export async function initAdminUiKitPage(root: HTMLElement): Promise<void> {
+export function connectAdminUiKitPage(root: HTMLElement): Promise<void> {
+    return connectPageModules([
+        definePageModule('admin-ui-kit', () => bootstrapAdminUiKitPage(root)),
+    ])
+}
+
+async function bootstrapAdminUiKitPage(root: HTMLElement): Promise<void> {
     const canvases = root.querySelectorAll<HTMLCanvasElement>('[data-admin-chart]')
 
     canvases.forEach((canvas) => {

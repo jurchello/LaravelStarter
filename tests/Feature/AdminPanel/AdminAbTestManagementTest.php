@@ -12,71 +12,144 @@ use App\Models\AbTestEvent;
 use App\Models\AbTestVariant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\DisablesCsrfForWebMutations;
 use Tests\TestCase;
 
 final class AdminAbTestManagementTest extends TestCase
 {
+    use DisablesCsrfForWebMutations;
     use RefreshDatabase;
 
-    public function test_admin_ab_test_create_page_renders_shell_only(): void
+    public function test_admin_ab_test_create_page_renders_server_side_initial_state(): void
     {
         $response = $this->actingAs($this->admin())->get('/management/ab-tests/create');
 
         $response->assertOk()
             ->assertViewIs('admin-panel.ab-tests.create')
             ->assertSee('data-admin-page="ab-test-create"', false)
+            ->assertSee('data-page-state="ready"', false)
             ->assertSee('data-ab-test-create-endpoint="/management/api/ab-tests"', false)
-            ->assertSee('data-ab-test-input="split-evenly"', false);
+            ->assertSee('data-ab-test-input="split-evenly"', false)
+            ->assertSee('Create AB Test')
+            ->assertSee('Create test');
     }
 
-    public function test_admin_ab_test_management_page_renders_shell_only(): void
+    public function test_admin_ab_test_management_page_renders_server_side_initial_state(): void
     {
-        $test = AbTest::factory()->create();
+        $test = AbTest::factory()->create([
+            'name' => 'Homepage Hero',
+            'slug' => 'homepage-hero',
+            'status' => AbTestStatus::Active,
+            'traffic_percent' => 75,
+        ]);
+        AbTestVariant::factory()->create([
+            'ab_test_id' => $test->id,
+            'name' => 'Control',
+            'slug' => 'control',
+            'weight' => 100,
+        ]);
 
         $response = $this->actingAs($this->admin())->get("/management/ab-tests/{$test->id}");
 
         $response->assertOk()
             ->assertViewIs('admin-panel.ab-tests.show')
             ->assertSee('data-admin-page="ab-test-management"', false)
+            ->assertSee('data-page-state="ready"', false)
             ->assertSee('data-ab-test-endpoint="/management/api/ab-tests/'.$test->id.'"', false)
             ->assertSee('data-ab-test-variants-endpoint="/management/api/ab-tests/'.$test->id.'/variants"', false)
-            ->assertSee('data-ab-test-input="split-evenly"', false);
+            ->assertSee('data-ab-test-input="split-evenly"', false)
+            ->assertSee($test->name)
+            ->assertSee($test->slug)
+            ->assertSee('Control')
+            ->assertSee('Save changes');
     }
 
-    public function test_admin_ab_test_assignments_page_renders_shell_only(): void
+    public function test_admin_ab_test_assignments_page_renders_server_side_initial_state(): void
     {
         $test = AbTest::factory()->create();
+        $variant = AbTestVariant::factory()->create([
+            'ab_test_id' => $test->id,
+            'name' => 'Control',
+            'slug' => 'control',
+        ]);
+        AbTestAssignment::factory()->create([
+            'ab_test_id' => $test->id,
+            'ab_test_variant_id' => $variant->id,
+            'visitor_id' => 'visitor-001',
+        ]);
 
         $response = $this->actingAs($this->admin())->get("/management/ab-tests/{$test->id}/assignments");
 
         $response->assertOk()
             ->assertViewIs('admin-panel.ab-tests.assignments')
             ->assertSee('data-admin-page="ab-test-assignments"', false)
-            ->assertSee('data-ab-test-assignments-endpoint="/management/api/ab-tests/'.$test->id.'/assignments"', false);
+            ->assertSee('data-page-state="ready"', false)
+            ->assertSee('data-ab-test-assignments-endpoint="/management/api/ab-tests/'.$test->id.'/assignments"', false)
+            ->assertSee('visitor-001')
+            ->assertSee('Control');
     }
 
-    public function test_admin_ab_test_events_page_renders_shell_only(): void
+    public function test_admin_ab_test_events_page_renders_server_side_initial_state(): void
     {
         $test = AbTest::factory()->create();
+        $variant = AbTestVariant::factory()->create([
+            'ab_test_id' => $test->id,
+            'name' => 'Control',
+            'slug' => 'control',
+        ]);
+        $assignment = AbTestAssignment::factory()->create([
+            'ab_test_id' => $test->id,
+            'ab_test_variant_id' => $variant->id,
+            'visitor_id' => 'visitor-001',
+        ]);
+        AbTestEvent::factory()->create([
+            'ab_test_assignment_id' => $assignment->id,
+            'event' => 'signup',
+        ]);
 
         $response = $this->actingAs($this->admin())->get("/management/ab-tests/{$test->id}/events");
 
         $response->assertOk()
             ->assertViewIs('admin-panel.ab-tests.events')
             ->assertSee('data-admin-page="ab-test-events"', false)
-            ->assertSee('data-ab-test-events-endpoint="/management/api/ab-tests/'.$test->id.'/events"', false);
+            ->assertSee('data-page-state="ready"', false)
+            ->assertSee('data-ab-test-events-endpoint="/management/api/ab-tests/'.$test->id.'/events"', false)
+            ->assertSee('signup')
+            ->assertSee('visitor-001');
     }
 
-    public function test_admin_ab_test_analytics_page_renders_shell_only(): void
+    public function test_admin_ab_test_analytics_page_renders_server_side_initial_state(): void
     {
-        $test = AbTest::factory()->create();
+        $test = AbTest::factory()->create([
+            'status' => AbTestStatus::Active,
+            'traffic_percent' => 100,
+        ]);
+        $variant = AbTestVariant::factory()->create([
+            'ab_test_id' => $test->id,
+            'name' => 'Control',
+            'slug' => 'control',
+            'weight' => 100,
+        ]);
+        $assignment = AbTestAssignment::factory()->create([
+            'ab_test_id' => $test->id,
+            'ab_test_variant_id' => $variant->id,
+            'visitor_id' => 'visitor-001',
+        ]);
+        AbTestEvent::factory()->create([
+            'ab_test_assignment_id' => $assignment->id,
+            'event' => 'purchase',
+        ]);
 
         $response = $this->actingAs($this->admin())->get("/management/ab-tests/{$test->id}/analytics");
 
         $response->assertOk()
             ->assertViewIs('admin-panel.ab-tests.analytics')
             ->assertSee('data-admin-page="ab-test-analytics"', false)
-            ->assertSee('data-ab-test-analytics-endpoint="/management/api/ab-tests/'.$test->id.'/analytics"', false);
+            ->assertSee('data-page-state="ready"', false)
+            ->assertSee('data-ab-test-analytics-endpoint="/management/api/ab-tests/'.$test->id.'/analytics"', false)
+            ->assertSee('purchase')
+            ->assertSee('100%')
+            ->assertSee('Control');
     }
 
     public function test_admin_ab_test_management_api_returns_detail_envelope(): void

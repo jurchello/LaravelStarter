@@ -7,6 +7,7 @@ namespace Tests\Feature\Auth;
 use App\Infrastructure\Auth\Notifications\QueuedVerifyEmailNotification;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
@@ -17,13 +18,23 @@ final class EmailVerificationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutMiddleware(PreventRequestForgery::class);
+    }
+
     public function test_verification_screen_can_be_rendered(): void
     {
         $user = User::factory()->unverified()->create();
 
         $response = $this->actingAs($user)->get(route('verification.notice'));
 
-        $response->assertOk();
+        $response->assertOk()
+            ->assertSee('data-site-page="verify-email"', false)
+            ->assertSee('data-page-state="ready"', false)
+            ->assertSee('data-testid="site-verify-email-page"', false);
     }
 
     public function test_email_can_be_verified(): void

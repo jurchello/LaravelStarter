@@ -3,6 +3,11 @@
 @section('title', 'Register')
 
 @section('content')
+    <x-site.page
+        data-site-page="register"
+        data-page-state="ready"
+        data-testid="site-register-page"
+    >
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
             <x-site.card padded>
@@ -90,4 +95,5 @@
             </x-site.card>
         </div>
     </div>
+    </x-site.page>
 @endsection

@@ -17,9 +17,9 @@ Add a new entry whenever a non-obvious architectural choice is made.
 
 ## ADR-002 — HTTP clients initialised synchronously before the orchestrator
 
-**Decision:** `ensureHttpReady()` (from `shared/http/bootstrap.ts`) is called synchronously before `runModules()` in the orchestrator.
+**Decision:** `ensureHttpReady()` (from `shared/http/bootstrap.ts`) is called synchronously before the shared module-spec runner starts.
 
-**Reason:** The `i18n` module makes an HTTP request during its own `init()`. The axios clients must be ready before the first module starts. Making `http` a module inside `runModules` would work with `dependsOn`, but `shared/http` requires no lifecycle (no `integrate`, no `defer`) — it is infrastructure, not a feature module.
+**Reason:** The `i18n` module makes an HTTP request during its own `init()`. The axios clients must be ready before the first module starts. Modeling `http` as a regular module spec would work with `dependsOn`, but `shared/http` requires no lifecycle (`integrate`, `defer`) and is infrastructure, not a feature module.
 
 ---
 

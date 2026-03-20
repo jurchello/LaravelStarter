@@ -71,10 +71,18 @@ They are not optional style preferences. They define where code is allowed to li
 - DOM wiring belongs in `bootstrap.ts` or page connectors, never in service files.
 - Shared system concerns such as toast and i18n remain shared modules, not page-local rewrites.
 - Admin pages must use `x-admin.*` and site pages must use `x-site.*` when a matching kit component already exists.
-- Admin HTML is shell-only delivery. Interactive admin data must flow through `/management/api/*`, not through Blade-owned data payloads.
+- Admin HTML must render the first meaningful screen state. Interactive refresh and mutation flows must use `/management/api/*`, not Blade-owned JSON payloads.
 - Do not embed admin domain data in Blade with `@json`, `json_encode()`, or similar inline JSON islands.
+- Initial meaningful page content must be server-rendered in Blade when the controller can produce it. Client-side enhancement may refresh or mutate that state afterwards, but it must not be responsible for the first meaningful render.
 - API exception rendering is centralized in the global handler. Controllers may validate and delegate, but they must not hand-roll JSON error payloads for business failures or unexpected exceptions.
 - Structural site-only actions may remain web flows when they restore or tear down session state for server-rendered UI. The impersonation-exit banner is one explicit allowed exception.
+
+## Transport boundaries
+
+- One controller action must expose one transport contract only.
+- An action may return `View` or `JsonResponse`, never both conditionally.
+- Do not branch on `expectsJson()`, `wantsJson()`, or similar transport negotiation inside the same action to choose between Blade and JSON.
+- If both HTML and JSON are needed, define separate routes and separate controller actions.
 
 ## Security config placement
 

@@ -1,56 +1,35 @@
 import { ensureHttpReady } from '@/shared/http/bootstrap'
+import * as runtimeState from '@/shared/runtime-state/init'
+import { markAppBasicReady } from '@/shared/runtime-state/module'
 import * as i18n from '@/modules/i18n/init'
 import * as toast from '@/modules/toast/init'
-
-type ModuleSpec = {
-    id: string
-    dependsOn?: string[]
-    init: () => void | Promise<void>
-    integrate: () => void | Promise<void>
-    defer?: () => void | Promise<void>
-}
+import { connectModuleSpecs, type ModuleSpec } from '@/core/module-connect'
 
 type ConnectContext = {
     [key: string]: unknown
 }
 
+const systemModules: ModuleSpec[] = [
+    {
+        id: 'runtime-state',
+        init: () => runtimeState.init(),
+        integrate: () => runtimeState.integrate(),
+    },
+    {
+        id: 'i18n',
+        dependsOn: ['runtime-state'],
+        init: () => i18n.init(),
+        integrate: () => i18n.integrate(),
+    },
+    {
+        id: 'toast',
+        dependsOn: ['i18n'],
+        init: () => toast.init(),
+        integrate: () => toast.integrate(),
+    },
+]
+
 let connectPromise: Promise<void> | null = null
-
-async function runModules(modules: ModuleSpec[]): Promise<void> {
-    const byId = new Map(modules.map((m) => [m.id, m]))
-    const done = new Map<string, Promise<void>>()
-
-    const run = (id: string): Promise<void> => {
-        const cached = done.get(id)
-        if (cached) {
-            return cached
-        }
-
-        const module = byId.get(id)
-        if (!module) {
-            return Promise.reject(new Error(`[connect] Unknown module: ${id}`))
-        }
-
-        const deps = module.dependsOn ?? []
-        const promise = Promise.all(deps.map(run))
-            .then(() => module.init())
-            .then(() => module.integrate())
-
-        done.set(id, promise)
-        return promise
-    }
-
-    const results = await Promise.allSettled(modules.map((m) => run(m.id)))
-    const deferred = modules.filter((m): m is ModuleSpec & { defer: () => void | Promise<void> } =>
-        typeof m.defer === 'function'
-    )
-    await Promise.allSettled(deferred.map((m) => Promise.resolve(m.defer())))
-
-    const failed = results.find((r): r is PromiseRejectedResult => r.status === 'rejected')
-    if (failed) {
-        throw failed.reason
-    }
-}
 
 export function connectModules(_context: ConnectContext = {}): Promise<void> {
     if (connectPromise) {
@@ -60,19 +39,9 @@ export function connectModules(_context: ConnectContext = {}): Promise<void> {
     connectPromise = (async () => {
         ensureHttpReady()
 
-        await runModules([
-            {
-                id: 'i18n',
-                init: () => i18n.init({}),
-                integrate: () => i18n.integrate(),
-            },
-            {
-                id: 'toast',
-                dependsOn: ['i18n'],
-                init: () => toast.init({}),
-                integrate: () => toast.integrate(),
-            },
-        ])
+        await connectModuleSpecs(systemModules)
+
+        markAppBasicReady()
     })()
 
     return connectPromise

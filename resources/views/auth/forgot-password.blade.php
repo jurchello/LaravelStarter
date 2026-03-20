@@ -3,6 +3,11 @@
 @section('title', 'Forgot password')
 
 @section('content')
+    <x-site.page
+        data-site-page="forgot-password"
+        data-page-state="ready"
+        data-testid="site-forgot-password-page"
+    >
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
             <x-site.card padded>
@@ -38,4 +43,5 @@
             </x-site.card>
         </div>
     </div>
+    </x-site.page>
 @endsection
