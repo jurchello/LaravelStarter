@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\AdminPanel;
 
-use App\Events\AdminPanel\FeatureFlagsChanged;
 use App\Application\FeatureFlags\CreateFeatureFlagAction;
 use App\Application\FeatureFlags\DeleteFeatureFlagAction;
 use App\Application\FeatureFlags\GetPaginatedFeatureFlagsAction;
 use App\Application\FeatureFlags\UpdateFeatureFlagAction;
 use App\Domain\FeatureFlags\Dto\FeatureFlagData;
 use App\Domain\FeatureFlags\ValueObjects\FeatureFlagListQuery;
+use App\Events\AdminPanel\FeatureFlagsChanged;
 use App\Http\Controllers\Concerns\RespondsWithApiEnvelope;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AdminPanel\AdminFeatureFlagResource;
