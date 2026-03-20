@@ -47,23 +47,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-php-8.4-composer-
 
-      - name: Prepare writable Laravel directories
+      - name: Prepare Laravel environment
         run: |
           mkdir -p bootstrap/cache
+          mkdir -p database
           mkdir -p storage/framework/cache
           mkdir -p storage/framework/sessions
           mkdir -p storage/framework/testing
           mkdir -p storage/framework/views
           mkdir -p storage/logs
-
-      - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-interaction --no-progress
-
-      - name: Prepare Laravel test environment
-        run: |
-          cp .env.example .env
-          mkdir -p database
           touch database/database.sqlite
+          cp .env.example .env
           sed -i 's/^APP_ENV=.*/APP_ENV=testing/' .env
           sed -i 's#^APP_KEY=.*#APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=#' .env
           sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=sqlite/' .env
@@ -72,6 +66,12 @@ jobs:
           sed -i 's/^QUEUE_CONNECTION=.*/QUEUE_CONNECTION=sync/' .env
           sed -i 's/^CACHE_STORE=.*/CACHE_STORE=array/' .env
           sed -i 's/^MAIL_MAILER=.*/MAIL_MAILER=array/' .env
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Run Laravel migrations for testing
+        run: |
           php artisan config:clear
           php artisan migrate --env=testing --force
 
