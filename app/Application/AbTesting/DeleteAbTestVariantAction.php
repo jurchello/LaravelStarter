@@ -11,14 +11,12 @@ use App\Domain\AbTesting\Enums\AbTestStatus;
 use App\Domain\AbTesting\ReadModels\AbTestManagementView;
 use App\Domain\AbTesting\Repositories\AbTestRepository;
 use App\Domain\AbTesting\Services\AbTestActivationPolicy;
-use App\Domain\AbTesting\Services\AbTestMutationPolicy;
 
 final readonly class DeleteAbTestVariantAction
 {
     public function __construct(
         private AbTestRepository $tests,
         private AbTestActivationPolicy $activationPolicy,
-        private AbTestMutationPolicy $mutationPolicy,
     ) {}
 
     public function execute(int $abTestId, int $variantId): AbTestManagementView

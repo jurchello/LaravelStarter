@@ -20,8 +20,9 @@ final class SyncPermissionsCommand extends Command
     {
         $managedNames = [];
         $unnamedManagedRoutes = [];
+        $routes = RouteFacade::getRoutes()->getRoutes();
 
-        foreach (RouteFacade::getRoutes() as $route) {
+        foreach ($routes as $route) {
             if (! $this->shouldManage($route)) {
                 continue;
             }

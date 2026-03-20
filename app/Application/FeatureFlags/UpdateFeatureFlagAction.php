@@ -33,7 +33,7 @@ final readonly class UpdateFeatureFlagAction
         }
 
         $keys = array_values(array_unique(array_filter([
-            $existing?->key,
+            $existing->key,
             $flag->key,
         ])));
 

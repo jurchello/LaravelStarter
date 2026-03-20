@@ -80,9 +80,9 @@ final class EloquentAbTestRepository implements AbTestRepository
                     id: $assignment->id,
                     visitorId: $assignment->visitor_id,
                     userId: $assignment->user_id,
-                    variantName: $assignment->variant?->name ?? 'Unknown variant',
-                    variantSlug: $assignment->variant?->slug ?? 'unknown',
-                    createdAt: $assignment->created_at?->toIso8601String() ?? '',
+                    variantName: $assignment->variant->name,
+                    variantSlug: $assignment->variant->slug,
+                    createdAt: $assignment->created_at->toIso8601String(),
                 ))
                 ->all(),
             total: $paginator->total(),
@@ -108,10 +108,10 @@ final class EloquentAbTestRepository implements AbTestRepository
                 ->map(static fn (AbTestEvent $event): AbTestEventListItem => new AbTestEventListItem(
                     id: $event->id,
                     event: $event->event,
-                    variantName: $event->assignment?->variant?->name ?? 'Unknown variant',
-                    variantSlug: $event->assignment?->variant?->slug ?? 'unknown',
-                    visitorId: $event->assignment?->visitor_id ?? 'unknown',
-                    createdAt: $event->created_at?->toIso8601String() ?? '',
+                    variantName: $event->assignment->variant->name,
+                    variantSlug: $event->assignment->variant->slug,
+                    visitorId: $event->assignment->visitor_id,
+                    createdAt: $event->created_at->toIso8601String(),
                 ))
                 ->all(),
             total: $paginator->total(),
@@ -168,7 +168,7 @@ final class EloquentAbTestRepository implements AbTestRepository
     public function createManagementView(AbTestData $data): AbTestManagementView
     {
         $model = AbTestModel::query()->create($this->mapAbTestData($data) + [
-            'status' => AbTestStatus::Draft,
+            'status' => AbTestStatus::Draft->value,
         ]);
 
         return $this->findManagementViewOrFail($model->id);
@@ -325,7 +325,7 @@ final class EloquentAbTestRepository implements AbTestRepository
             trafficPercent: $model->traffic_percent,
             distributionMode: $model->distribution_mode ?? AbTestDistributionMode::Manual,
             variants: $model->variants
-                ->map(fn ($variant): AbTestVariant => new AbTestVariant(
+                ->map(fn (AbTestVariantModel $variant): AbTestVariant => new AbTestVariant(
                     id: $variant->id,
                     slug: $variant->slug,
                     weight: $variant->weight,
@@ -336,8 +336,10 @@ final class EloquentAbTestRepository implements AbTestRepository
 
     private function toManagementView(AbTestModel $model): AbTestManagementView
     {
-        $assignments = $model->assignments instanceof Collection ? $model->assignments : collect();
-        $variants = $model->variants instanceof Collection ? $model->variants : collect();
+        /** @var Collection<int, AbTestAssignment> $assignments */
+        $assignments = $model->assignments;
+        /** @var Collection<int, AbTestVariantModel> $variants */
+        $variants = $model->variants;
 
         $assignmentsByVariantId = $assignments
             ->groupBy('ab_test_variant_id')
@@ -357,9 +359,9 @@ final class EloquentAbTestRepository implements AbTestRepository
                 id: $assignment->id,
                 visitorId: $assignment->visitor_id,
                 userId: $assignment->user_id,
-                variantName: $assignment->variant?->name ?? 'Unknown variant',
-                variantSlug: $assignment->variant?->slug ?? 'unknown',
-                createdAt: $assignment->created_at?->toIso8601String() ?? '',
+                variantName: $assignment->variant->name,
+                variantSlug: $assignment->variant->slug,
+                createdAt: $assignment->created_at->toIso8601String(),
             ))
             ->values()
             ->all();
@@ -379,10 +381,10 @@ final class EloquentAbTestRepository implements AbTestRepository
                 return new AbTestRecentEvent(
                     id: $event->id,
                     event: $event->event,
-                    variantName: $assignment->variant?->name ?? 'Unknown variant',
-                    variantSlug: $assignment->variant?->slug ?? 'unknown',
+                    variantName: $assignment->variant->name,
+                    variantSlug: $assignment->variant->slug,
                     visitorId: $assignment->visitor_id,
-                    createdAt: $event->created_at?->toIso8601String() ?? '',
+                    createdAt: $event->created_at->toIso8601String(),
                 );
             })
             ->values()

@@ -32,7 +32,11 @@ final class ApiEnvelopeResource extends JsonResource
 
     private function normalize(mixed $value, Request $request): mixed
     {
-        if ($value instanceof JsonResource || $value instanceof AnonymousResourceCollection) {
+        if ($value instanceof AnonymousResourceCollection) {
+            return $value->resolve($request);
+        }
+
+        if ($value instanceof JsonResource) {
             return $value->resolve($request);
         }
 

@@ -9,6 +9,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int $ab_test_id
+ * @property string $name
+ * @property string $slug
+ * @property int $weight
+ */
 class AbTestVariant extends Model
 {
     use HasFactory;
@@ -22,11 +29,13 @@ class AbTestVariant extends Model
         ];
     }
 
+    /** @return BelongsTo<AbTest, $this> */
     public function abTest(): BelongsTo
     {
         return $this->belongsTo(AbTest::class);
     }
 
+    /** @return HasMany<AbTestAssignment, $this> */
     public function assignments(): HasMany
     {
         return $this->hasMany(AbTestAssignment::class);

@@ -12,14 +12,12 @@ use App\Domain\AbTesting\ReadModels\AbTestManagementVariant;
 use App\Domain\AbTesting\ReadModels\AbTestManagementView;
 use App\Domain\AbTesting\Repositories\AbTestRepository;
 use App\Domain\AbTesting\Services\AbTestActivationPolicy;
-use App\Domain\AbTesting\Services\AbTestMutationPolicy;
 
 final readonly class CreateAbTestVariantAction
 {
     public function __construct(
         private AbTestRepository $tests,
         private AbTestActivationPolicy $activationPolicy,
-        private AbTestMutationPolicy $mutationPolicy,
     ) {}
 
     public function execute(int $abTestId, AbTestVariantData $data): AbTestManagementView

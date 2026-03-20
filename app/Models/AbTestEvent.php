@@ -8,6 +8,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property string $event
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property AbTestAssignment $assignment
+ */
 class AbTestEvent extends Model
 {
     use HasFactory;
@@ -16,6 +22,7 @@ class AbTestEvent extends Model
 
     protected $fillable = ['ab_test_assignment_id', 'event'];
 
+    /** @return BelongsTo<AbTestAssignment, $this> */
     public function assignment(): BelongsTo
     {
         return $this->belongsTo(AbTestAssignment::class, 'ab_test_assignment_id');
