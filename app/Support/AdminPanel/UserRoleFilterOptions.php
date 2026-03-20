@@ -7,7 +7,7 @@ namespace App\Support\AdminPanel;
 final class UserRoleFilterOptions
 {
     /**
-     * @param array<int, string> $roleNames
+     * @param  array<int, string>                     $roleNames
      * @return array<int, array{value: string, label: string}>
      */
     public static function build(array $roleNames): array
