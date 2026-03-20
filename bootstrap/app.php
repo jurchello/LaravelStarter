@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/site_web.php',
         api: __DIR__.'/../routes/site_api.php',
         commands: __DIR__.'/../routes/console.php',
+        channels: __DIR__.'/../routes/channels.php',
         then: function (): void {
             Route::middleware('web')
                 ->group(base_path('routes/admin_panel_web.php'));

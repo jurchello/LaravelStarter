@@ -14,6 +14,7 @@ Included out of the box:
 - roles, permissions, managed route-permission sync, and admin-only areas
 - site and admin API endpoints with generated API documentation / Swagger
 - Docker-based local stack with Nginx, PHP-FPM, MariaDB, Redis, Mailpit, queues, and Vite
+- Laravel Reverb realtime layer with Laravel Echo on the frontend
 - GitHub Actions CI for backend and frontend quality checks on push and pull request
 - backend, frontend, and architecture tests
 - DDD-oriented structure, project docs, standards, and generator stubs for future modules
@@ -60,6 +61,7 @@ Default local URLs after startup:
 - Health live: `http://127.0.0.1:8011/health/live`
 - Health ready: `http://127.0.0.1:8011/health/ready`
 - Vite dev server: `http://127.0.0.1:5173`
+- Reverb WebSocket server: `ws://127.0.0.1:8080`
 
 Default local admin seed:
 
@@ -93,6 +95,7 @@ Important:
 - `redis` on `6382`
 - `mailpit` on `1025` SMTP and `8025` UI
 - `nginx/php` on `8011`
+- `reverb` on `8080`
 - `queue:work` for `email,default`
 - `vite` on `5173`
 
@@ -128,6 +131,7 @@ Production notes:
 
 - use real DB/Redis/mail credentials
 - set the final domain in `APP_URL`
+- run `php artisan reverb:start` under a process manager as a dedicated long-running process
 - do not rely on default seeded credentials
 - keep `/docs/site-api` and `/docs/admin-api` behind the verified-admin gate outside local environments
 

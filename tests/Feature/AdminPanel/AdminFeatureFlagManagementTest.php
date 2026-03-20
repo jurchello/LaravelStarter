@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature\AdminPanel;
 
+use App\Events\AdminPanel\FeatureFlagsChanged;
 use App\Models\FeatureFlag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Laravel\Pennant\Feature;
 use Tests\Concerns\DisablesCsrfForWebMutations;
 use Tests\TestCase;
@@ -69,6 +71,7 @@ final class AdminFeatureFlagManagementTest extends TestCase
     public function test_admin_can_create_update_and_delete_feature_flag(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
+        Event::fake([FeatureFlagsChanged::class]);
 
         $created = $this->actingAs($admin)->postJson('/management/api/feature-flags', [
             'key' => 'new-dashboard',
@@ -102,6 +105,21 @@ final class AdminFeatureFlagManagementTest extends TestCase
             ->assertJsonPath('data.deleted', true);
 
         $this->assertDatabaseMissing('feature_flags', ['id' => $flagId]);
+        Event::assertDispatched(FeatureFlagsChanged::class, fn (FeatureFlagsChanged $event): bool => $event->action === 'created');
+        Event::assertDispatched(FeatureFlagsChanged::class, fn (FeatureFlagsChanged $event): bool => $event->action === 'updated');
+        Event::assertDispatched(FeatureFlagsChanged::class, fn (FeatureFlagsChanged $event): bool => $event->action === 'deleted');
+    }
+
+    public function test_admin_can_authorize_feature_flags_broadcast_channel(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $response = $this->actingAs($admin)->postJson('/broadcasting/auth', [
+            'channel_name' => 'private-admin.feature-flags',
+            'socket_id' => '1234.5678',
+        ]);
+
+        $response->assertOk();
     }
 
     public function test_admin_feature_flag_suggestions_api_returns_matching_keys(): void

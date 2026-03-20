@@ -11,6 +11,7 @@ import {
     type AdminFeatureFlagsSortDirection,
     type AdminFeatureFlagsSortKey,
 } from '@/modules/admin-feature-flags/service'
+import { subscribeToPrivateEvent } from '@/modules/realtime/module'
 import {
     setPageEmpty,
     setPageError,
@@ -260,6 +261,16 @@ async function bootstrapAdminFeatureFlagsPage(root: HTMLElement): Promise<void> 
                 emitNotify({ type: 'success', message: 'Feature flag deleted.' })
                 await refresh()
             }
+        })()
+    })
+
+    subscribeToPrivateEvent<{ action: string }>('admin.feature-flags', 'admin.feature-flags.changed', () => {
+        void (async () => {
+            await refresh()
+            emitNotify({
+                type: 'info',
+                message: 'Feature flags were updated in another session.',
+            })
         })()
     })
 }

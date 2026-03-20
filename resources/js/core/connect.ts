@@ -2,6 +2,7 @@ import { ensureHttpReady } from '@/shared/http/bootstrap'
 import * as runtimeState from '@/shared/runtime-state/init'
 import { markAppBasicReady } from '@/shared/runtime-state/module'
 import * as i18n from '@/modules/i18n/init'
+import * as realtime from '@/modules/realtime/init'
 import * as toast from '@/modules/toast/init'
 import { connectModuleSpecs, type ModuleSpec } from '@/core/module-connect'
 
@@ -20,6 +21,12 @@ const systemModules: ModuleSpec[] = [
         dependsOn: ['runtime-state'],
         init: () => i18n.init(),
         integrate: () => i18n.integrate(),
+    },
+    {
+        id: 'realtime',
+        dependsOn: ['runtime-state'],
+        init: () => realtime.init(),
+        integrate: () => realtime.integrate(),
     },
     {
         id: 'toast',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\AdminPanel;
 
+use App\Events\AdminPanel\FeatureFlagsChanged;
 use App\Application\FeatureFlags\CreateFeatureFlagAction;
 use App\Application\FeatureFlags\DeleteFeatureFlagAction;
 use App\Application\FeatureFlags\GetPaginatedFeatureFlagsAction;
@@ -58,6 +59,7 @@ final class AdminFeatureFlagsApiController extends Controller
     public function store(Request $request): JsonResponse
     {
         $flag = $this->createFlag->execute($this->dataFromRequest($request));
+        broadcast(new FeatureFlagsChanged('created'))->toOthers();
 
         return $this->respond([
             'flag' => new AdminFeatureFlagResource($flag),
@@ -67,6 +69,7 @@ final class AdminFeatureFlagsApiController extends Controller
     public function update(Request $request, FeatureFlag $featureFlag): JsonResponse
     {
         $flag = $this->updateFlag->execute((int) $featureFlag->id, $this->dataFromRequest($request, $featureFlag));
+        broadcast(new FeatureFlagsChanged('updated'))->toOthers();
 
         return $this->respond([
             'flag' => new AdminFeatureFlagResource($flag),
@@ -76,6 +79,7 @@ final class AdminFeatureFlagsApiController extends Controller
     public function destroy(FeatureFlag $featureFlag): JsonResponse
     {
         $this->deleteFlag->execute((int) $featureFlag->id);
+        broadcast(new FeatureFlagsChanged('deleted'))->toOthers();
 
         return $this->respond([
             'deleted' => true,

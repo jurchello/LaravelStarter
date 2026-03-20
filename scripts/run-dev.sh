@@ -36,10 +36,11 @@ docker-compose exec php php artisan storage:link || true
 docker-compose restart nginx > /dev/null
 
 # 6. Run in parallel
-concurrently -n "DB,REDIS,MAILPIT,PHP,QUEUE,VITE" -c "blue,cyan,yellow,green,white,magenta" \
+concurrently -n "DB,REDIS,MAILPIT,PHP,REVERB,QUEUE,VITE" -c "blue,cyan,yellow,green,brightGreen,white,magenta" \
   "docker-compose logs --tail=50 -f db" \
   "docker-compose logs --tail=50 -f redis" \
   "docker-compose logs --tail=50 -f mailpit" \
   "docker-compose logs --tail=50 -f nginx php" \
+  "docker-compose logs --tail=50 -f reverb" \
   "docker-compose exec php php artisan queue:work --queue=email,default --tries=3 --backoff=5 --timeout=90" \
   "npm run dev -- --host 127.0.0.1 --port 5173 --strictPort"

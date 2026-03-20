@@ -7,6 +7,7 @@
 - **DB:** MariaDB 10.11
 - **Cache / Queues / Sessions:** Redis
 - **Server:** Nginx + PHP-FPM (Docker)
+- **Realtime:** Laravel Reverb + Laravel Echo
 - **Static analysis:** PHPStan (larastan), ESLint
 - **Tests:** PHPUnit, Vitest
 - **DTO:** plain `readonly` DTO classes

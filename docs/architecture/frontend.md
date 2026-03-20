@@ -131,12 +131,17 @@ Three modules are auto-loaded on every page by the orchestrator. Do not list the
 | Module | Location |
 |--------|----------|
 | `i18n` | `modules/i18n/` |
+| `realtime` | `modules/realtime/` |
 | `toast` | `modules/toast/` |
 | `shared/http` | `shared/http/` (initialised before the module runner, not modeled as a module spec) |
 
 The shared `toast` module is the canonical transient-feedback channel for both site and admin surfaces.
 Do not add page-local inline success/info/error messaging for event-driven feedback when a toast is appropriate.
 For the template baseline, the `site` surface is Bootstrap-neutral: reusable view components define structure, while project branding is expected to arrive later through a dedicated skin layer.
+
+The shared `realtime` module owns Echo / Reverb wiring and socket identity propagation.
+Pages do not construct Echo clients directly; they only subscribe to channels through the module facade.
+Private channel authentication remains session-based through the normal Laravel broadcasting auth endpoint.
 
 ---
 
