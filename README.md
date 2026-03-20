@@ -12,6 +12,7 @@ Included out of the box:
 - roles, permissions, managed route-permission sync, and admin-only areas
 - site and admin API endpoints with generated API documentation / Swagger
 - Docker-based local stack with Nginx, PHP-FPM, MariaDB, Redis, Mailpit, queues, and Vite
+- GitHub Actions CI for backend and frontend quality checks on push and pull request
 - backend, frontend, architecture, and e2e tests
 - DDD-oriented structure, project docs, standards, and generator stubs for future modules
 
