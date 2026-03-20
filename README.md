@@ -2,6 +2,8 @@
 
 Reusable Laravel SaaS-style template with session auth, admin panel, AB testing, generated API docs / Swagger, Docker-based local stack, and architecture guardrails.
 
+Target runtime baseline: PHP 8.4 and Node 24 LTS.
+
 Included out of the box:
 
 - session-based auth with registration, login, password reset, email verification, Google sign-in, and admin impersonation

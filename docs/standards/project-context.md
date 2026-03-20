@@ -2,8 +2,8 @@
 
 ## Stack
 
-- **Backend:** Laravel 13, PHP 8.3
-- **Frontend:** Vite, TypeScript
+- **Backend:** Laravel 13, PHP 8.4
+- **Frontend:** Vite, TypeScript, Node 24 LTS
 - **DB:** MariaDB 10.11
 - **Cache / Queues / Sessions:** Redis
 - **Server:** Nginx + PHP-FPM (Docker)
