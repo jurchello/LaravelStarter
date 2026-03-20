@@ -16,7 +16,9 @@ use Tests\TestCase;
 final class CreateFeatureFlagActionTest extends TestCase
 {
     private FeatureFlagRepository&MockInterface $flags;
+
     private FeatureFlagRuntime&MockInterface $runtime;
+
     private CreateFeatureFlagAction $action;
 
     protected function setUp(): void

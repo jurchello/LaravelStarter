@@ -52,7 +52,7 @@ final class GoogleAuthenticationCallbackController extends Controller
         $providerUserId = trim((string) $user->getId());
 
         if ($providerUserId === '') {
-            throw new SocialAuthenticationFailed();
+            throw new SocialAuthenticationFailed;
         }
 
         return new SocialAccountData(

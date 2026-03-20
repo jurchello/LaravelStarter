@@ -24,7 +24,7 @@ final class EloquentAbTestEventRepositoryTest extends TestCase
     {
         parent::setUp();
 
-        $this->repository = new EloquentAbTestEventRepository();
+        $this->repository = new EloquentAbTestEventRepository;
     }
 
     public function test_records_event(): void

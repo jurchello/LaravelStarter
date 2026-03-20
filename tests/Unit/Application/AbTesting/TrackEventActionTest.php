@@ -20,8 +20,11 @@ use Tests\TestCase;
 final class TrackEventActionTest extends TestCase
 {
     private AbTestRepository&MockInterface $tests;
+
     private AbTestAssignmentRepository&MockInterface $assignments;
+
     private AbTestEventRepository&MockInterface $events;
+
     private TrackEventAction $action;
 
     protected function setUp(): void

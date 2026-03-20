@@ -20,7 +20,7 @@ final class PhpFileTranslationLoaderTest extends TestCase
             $this->fakeFile('messages.php', ['hello' => 'Hello']),
         ]);
 
-        $loader = new PhpFileTranslationLoader();
+        $loader = new PhpFileTranslationLoader;
         $result = $loader->load($locale);
 
         $this->assertSame('en', $result['locale']);
@@ -31,7 +31,7 @@ final class PhpFileTranslationLoaderTest extends TestCase
     {
         File::shouldReceive('isDirectory')->andReturn(false);
 
-        $loader = new PhpFileTranslationLoader();
+        $loader = new PhpFileTranslationLoader;
         $result = $loader->load('en');
 
         $this->assertSame([], $result['dictionary']);
@@ -39,10 +39,11 @@ final class PhpFileTranslationLoaderTest extends TestCase
 
     private function fakeFile(string $name, array $translations): object
     {
-        $tmpPath = sys_get_temp_dir() . '/' . $name;
-        file_put_contents($tmpPath, '<?php return ' . var_export($translations, true) . ';');
+        $tmpPath = sys_get_temp_dir().'/'.$name;
+        file_put_contents($tmpPath, '<?php return '.var_export($translations, true).';');
 
-        return new class($name, $tmpPath) extends \SplFileInfo {
+        return new class($name, $tmpPath) extends \SplFileInfo
+        {
             public function __construct(
                 private readonly string $filename,
                 string $path,

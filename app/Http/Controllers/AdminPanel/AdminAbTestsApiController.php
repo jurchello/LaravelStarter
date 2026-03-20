@@ -10,6 +10,7 @@ use App\Http\Controllers\Concerns\RespondsWithApiEnvelope;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AdminPanel\AdminAbTestListItemResource;
 use App\Http\Resources\Api\PaginationMetaResource;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class AdminAbTestsApiController extends Controller
@@ -20,7 +21,7 @@ final class AdminAbTestsApiController extends Controller
         private readonly GetPaginatedAbTestsAction $getTests,
     ) {}
 
-    public function __invoke(Request $request): \Illuminate\Http\JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
         $query = AbTestListQuery::fromScalars(
             page: $request->integer('page', 1),

@@ -16,7 +16,7 @@ final class AdminMailPreviewRenderController extends Controller
     public function __invoke(string $template): Response
     {
         $message = match ($template) {
-            'verify-email' => (new VerifyEmail())->toMail($this->fakeUser()),
+            'verify-email' => (new VerifyEmail)->toMail($this->fakeUser()),
             'password-reset' => (new ResetPassword('preview-reset-token'))->toMail($this->fakeUser()),
             default => abort(404),
         };
@@ -26,7 +26,7 @@ final class AdminMailPreviewRenderController extends Controller
 
     private function fakeUser(): User
     {
-        $user = new User();
+        $user = new User;
         $user->forceFill([
             'id' => 999999,
             'name' => 'Preview User',

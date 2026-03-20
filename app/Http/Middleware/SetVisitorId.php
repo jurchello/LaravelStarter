@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 final class SetVisitorId
 {
     public const COOKIE_NAME = 'visitor_id';
+
     public const COOKIE_TTL_DAYS = 365;
 
     public function handle(Request $request, Closure $next): Response

@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\AdminPanel\AdminFeatureFlagResource;
 use App\Http\Resources\Api\PaginationMetaResource;
 use App\Models\FeatureFlag;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -29,7 +30,7 @@ final class AdminFeatureFlagsApiController extends Controller
         private readonly DeleteFeatureFlagAction $deleteFlag,
     ) {}
 
-    public function __invoke(Request $request): \Illuminate\Http\JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
         $query = FeatureFlagListQuery::fromScalars(
             page: $request->integer('page', 1),
@@ -54,7 +55,7 @@ final class AdminFeatureFlagsApiController extends Controller
         );
     }
 
-    public function store(Request $request): \Illuminate\Http\JsonResponse
+    public function store(Request $request): JsonResponse
     {
         $flag = $this->createFlag->execute($this->dataFromRequest($request));
 
@@ -63,7 +64,7 @@ final class AdminFeatureFlagsApiController extends Controller
         ], status: 201);
     }
 
-    public function update(Request $request, FeatureFlag $featureFlag): \Illuminate\Http\JsonResponse
+    public function update(Request $request, FeatureFlag $featureFlag): JsonResponse
     {
         $flag = $this->updateFlag->execute((int) $featureFlag->id, $this->dataFromRequest($request, $featureFlag));
 
@@ -72,7 +73,7 @@ final class AdminFeatureFlagsApiController extends Controller
         ]);
     }
 
-    public function destroy(FeatureFlag $featureFlag): \Illuminate\Http\JsonResponse
+    public function destroy(FeatureFlag $featureFlag): JsonResponse
     {
         $this->deleteFlag->execute((int) $featureFlag->id);
 
@@ -105,5 +106,4 @@ final class AdminFeatureFlagsApiController extends Controller
             rolloutPercent: (int) $validated['rolloutPercent'],
         );
     }
-
 }

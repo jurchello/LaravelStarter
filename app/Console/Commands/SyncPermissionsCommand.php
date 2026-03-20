@@ -8,7 +8,6 @@ use Illuminate\Console\Command;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 final class SyncPermissionsCommand extends Command
@@ -31,6 +30,7 @@ final class SyncPermissionsCommand extends Command
 
             if (! is_string($name) || $name === '') {
                 $unnamedManagedRoutes[] = $route->uri();
+
                 continue;
             }
 

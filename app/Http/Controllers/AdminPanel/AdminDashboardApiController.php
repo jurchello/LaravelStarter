@@ -8,12 +8,13 @@ use App\Http\Controllers\Concerns\RespondsWithApiEnvelope;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AdminPanel\AdminDashboardStatResource;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 
 final class AdminDashboardApiController extends Controller
 {
     use RespondsWithApiEnvelope;
 
-    public function __invoke(): \Illuminate\Http\JsonResponse
+    public function __invoke(): JsonResponse
     {
         $totalUsers = User::query()->count();
         $adminUsers = User::query()->where('is_admin', true)->count();
@@ -24,27 +25,27 @@ final class AdminDashboardApiController extends Controller
 
         return $this->respond([
             'stats' => AdminDashboardStatResource::collection([
-                    [
-                        'label' => 'Total users',
-                        'value' => $totalUsers,
-                        'tone' => 'neutral',
-                    ],
-                    [
-                        'label' => 'Verified users',
-                        'value' => $verifiedUsers,
-                        'tone' => 'success',
-                    ],
-                    [
-                        'label' => 'Admins',
-                        'value' => $adminUsers,
-                        'tone' => 'accent',
-                    ],
-                    [
-                        'label' => 'New this week',
-                        'value' => $newUsersLastWeek,
-                        'tone' => 'warning',
-                    ],
-                ]),
+                [
+                    'label' => 'Total users',
+                    'value' => $totalUsers,
+                    'tone' => 'neutral',
+                ],
+                [
+                    'label' => 'Verified users',
+                    'value' => $verifiedUsers,
+                    'tone' => 'success',
+                ],
+                [
+                    'label' => 'Admins',
+                    'value' => $adminUsers,
+                    'tone' => 'accent',
+                ],
+                [
+                    'label' => 'New this week',
+                    'value' => $newUsersLastWeek,
+                    'tone' => 'warning',
+                ],
+            ]),
         ]);
     }
 }

@@ -22,7 +22,7 @@ final class SpatieRoleRepositoryTest extends TestCase
     {
         parent::setUp();
 
-        $this->repository = new SpatieRoleRepository();
+        $this->repository = new SpatieRoleRepository;
     }
 
     public function test_paginates_roles(): void

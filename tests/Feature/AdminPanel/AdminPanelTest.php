@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature\AdminPanel;
 
+use App\Domain\AbTesting\Enums\AbTestStatus;
+use App\Models\AbTest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 final class AdminPanelTest extends TestCase
@@ -217,7 +220,7 @@ final class AdminPanelTest extends TestCase
         $alice = User::factory()->create(['is_admin' => false, 'name' => 'Alice Admin', 'email' => 'alice@example.com']);
         User::factory()->create(['is_admin' => false, 'name' => 'Bob Member', 'email' => 'bob@example.com']);
 
-        \Spatie\Permission\Models\Role::create(['name' => 'Manager']);
+        Role::create(['name' => 'Manager']);
         $alice->assignRole('Manager');
 
         $response = $this->actingAs($admin)->getJson('/management/api/users?search=alice&role=Manager');
@@ -244,8 +247,8 @@ final class AdminPanelTest extends TestCase
         $admin = User::factory()->create(['is_admin' => true]);
         $user = User::factory()->create(['is_admin' => false]);
 
-        \Spatie\Permission\Models\Role::create(['name' => 'Manager']);
-        \Spatie\Permission\Models\Role::create(['name' => 'Developer']);
+        Role::create(['name' => 'Manager']);
+        Role::create(['name' => 'Developer']);
 
         $response = $this->actingAs($admin)->patchJson("/management/api/users/{$user->id}/roles", [
             'roles' => ['Manager', 'Developer'],
@@ -274,7 +277,7 @@ final class AdminPanelTest extends TestCase
     public function test_admin_ab_tests_api_returns_paginated_envelope(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
-        \App\Models\AbTest::factory()->count(3)->create();
+        AbTest::factory()->count(3)->create();
 
         $response = $this->actingAs($admin)->getJson('/management/api/ab-tests');
 
@@ -293,12 +296,12 @@ final class AdminPanelTest extends TestCase
     public function test_admin_ab_tests_api_can_filter_by_search_and_status(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
-        \App\Models\AbTest::factory()->create([
+        AbTest::factory()->create([
             'name' => 'Homepage Hero',
             'slug' => 'homepage-hero',
-            'status' => \App\Domain\AbTesting\Enums\AbTestStatus::Active,
+            'status' => AbTestStatus::Active,
         ]);
-        \App\Models\AbTest::factory()->inactive()->create([
+        AbTest::factory()->inactive()->create([
             'name' => 'Pricing Layout',
             'slug' => 'pricing-layout',
         ]);
@@ -314,8 +317,8 @@ final class AdminPanelTest extends TestCase
     public function test_admin_ab_tests_api_can_sort_by_name_descending(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
-        \App\Models\AbTest::factory()->create(['name' => 'Alpha Test', 'slug' => 'alpha-test']);
-        \App\Models\AbTest::factory()->create(['name' => 'Zulu Test', 'slug' => 'zulu-test']);
+        AbTest::factory()->create(['name' => 'Alpha Test', 'slug' => 'alpha-test']);
+        AbTest::factory()->create(['name' => 'Zulu Test', 'slug' => 'zulu-test']);
 
         $response = $this->actingAs($admin)->getJson('/management/api/ab-tests?sort=name&direction=desc');
 
@@ -326,7 +329,7 @@ final class AdminPanelTest extends TestCase
     public function test_admin_ab_test_suggestions_api_returns_name_and_slug_matches(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
-        \App\Models\AbTest::factory()->create([
+        AbTest::factory()->create([
             'name' => 'Homepage Hero',
             'slug' => 'homepage-hero',
         ]);

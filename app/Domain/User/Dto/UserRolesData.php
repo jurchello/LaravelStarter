@@ -12,7 +12,7 @@ final readonly class UserRolesData
     ) {}
 
     /**
-     * @param array<int, string> $roles
+     * @param  array<int, string>  $roles
      */
     public static function fromScalars(array $roles): self
     {

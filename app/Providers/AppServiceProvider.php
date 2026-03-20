@@ -18,7 +18,7 @@ use App\Domain\Shared\Randomizer;
 use App\Domain\Storage\Repositories\FileStorage;
 use App\Domain\User\Repositories\SocialAccountRepository;
 use App\Domain\User\Repositories\UserRepository;
-use App\Models\User;
+use App\Http\Middleware\SetVisitorId;
 use App\Infrastructure\AbTesting\Persistence\EloquentAbTestAssignmentRepository;
 use App\Infrastructure\AbTesting\Persistence\EloquentAbTestEventRepository;
 use App\Infrastructure\AbTesting\Persistence\EloquentAbTestRepository;
@@ -33,9 +33,11 @@ use App\Infrastructure\Shared\PhpRandomizer;
 use App\Infrastructure\Storage\LaravelFileStorage;
 use App\Infrastructure\User\Persistence\EloquentSocialAccountRepository;
 use App\Infrastructure\User\Persistence\EloquentUserRepository;
+use App\Models\User;
 use Dedoc\Scramble\Scramble;
-use Illuminate\Http\Request;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Filesystem\Factory;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Gate;
@@ -58,7 +60,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SocialAccountRepository::class, EloquentSocialAccountRepository::class);
         $this->app->bind(FileStorage::class, function ($app): LaravelFileStorage {
             return new LaravelFileStorage(
-                filesystems: $app->make(\Illuminate\Contracts\Filesystem\Factory::class),
+                filesystems: $app->make(Factory::class),
                 disk: (string) config('storage.file_storage_disk'),
             );
         });
@@ -79,7 +81,7 @@ class AppServiceProvider extends ServiceProvider
                 return null;
             }
 
-            return $request->user() ?? $request->cookie(\App\Http\Middleware\SetVisitorId::COOKIE_NAME);
+            return $request->user() ?? $request->cookie(SetVisitorId::COOKIE_NAME);
         });
 
         $this->app->make(FeatureFlagRuntime::class)->registerDefinitions();

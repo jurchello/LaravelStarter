@@ -13,13 +13,13 @@ final readonly class StopUserImpersonationAction
     public function execute(?int $impersonatorId): User
     {
         if (! $impersonatorId) {
-            throw new CannotLeaveImpersonation();
+            throw new CannotLeaveImpersonation;
         }
 
         $impersonator = User::query()->find($impersonatorId);
 
         if (! $impersonator || ! $impersonator->is_admin || ! $impersonator->hasVerifiedEmail()) {
-            throw new CannotLeaveImpersonation();
+            throw new CannotLeaveImpersonation;
         }
 
         return $impersonator;

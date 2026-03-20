@@ -7,7 +7,7 @@ namespace App\Domain\AbTesting\ReadModels;
 final readonly class AbTestAnalytics
 {
     /**
-     * @param array<string, int> $eventsByName
+     * @param  array<string, int>  $eventsByName
      */
     public function __construct(
         public int $assignmentsCount,

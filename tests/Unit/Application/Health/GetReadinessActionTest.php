@@ -44,7 +44,7 @@ final class GetReadinessActionTest extends TestCase
     private function service(bool $db, bool $redis, bool $queue): HealthCheckService
     {
         return new HealthCheckService(
-            new class ($db) implements DatabaseHealthChecker
+            new class($db) implements DatabaseHealthChecker
             {
                 public function __construct(
                     private readonly bool $result,
@@ -55,7 +55,7 @@ final class GetReadinessActionTest extends TestCase
                     return $this->result;
                 }
             },
-            new class ($redis) implements RedisHealthChecker
+            new class($redis) implements RedisHealthChecker
             {
                 public function __construct(
                     private readonly bool $result,
@@ -66,7 +66,7 @@ final class GetReadinessActionTest extends TestCase
                     return $this->result;
                 }
             },
-            new class ($queue) implements QueueHealthChecker
+            new class($queue) implements QueueHealthChecker
             {
                 public function __construct(
                     private readonly bool $result,

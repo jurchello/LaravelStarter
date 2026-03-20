@@ -70,7 +70,7 @@ final readonly class AssignVariantAction
     }
 
     /**
-     * @param AbTestVariant[] $variants
+     * @param  AbTestVariant[]  $variants
      */
     private function pickVariant(array $variants, AbTestDistributionMode $distributionMode): ?AbTestVariant
     {

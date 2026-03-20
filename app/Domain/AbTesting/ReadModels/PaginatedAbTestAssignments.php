@@ -7,7 +7,7 @@ namespace App\Domain\AbTesting\ReadModels;
 final readonly class PaginatedAbTestAssignments
 {
     /**
-     * @param array<int, AbTestAssignmentListItem> $items
+     * @param  array<int, AbTestAssignmentListItem>  $items
      */
     public function __construct(
         public array $items,

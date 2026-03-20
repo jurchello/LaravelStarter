@@ -8,11 +8,13 @@ use App\Application\AbTesting\CreateAbTestVariantAction;
 use App\Application\AbTesting\DeleteAbTestVariantAction;
 use App\Application\AbTesting\UpdateAbTestVariantAction;
 use App\Domain\AbTesting\Dto\AbTestVariantData;
+use App\Domain\AbTesting\ReadModels\AbTestManagementView;
 use App\Http\Controllers\Concerns\RespondsWithApiEnvelope;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AdminPanel\AdminAbTestManagementResource;
 use App\Models\AbTest;
 use App\Models\AbTestVariant;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -27,7 +29,7 @@ final class AdminAbTestVariantApiController extends Controller
         private readonly DeleteAbTestVariantAction $deleteVariant,
     ) {}
 
-    public function store(Request $request, AbTest $abTest): \Illuminate\Http\JsonResponse
+    public function store(Request $request, AbTest $abTest): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -51,7 +53,7 @@ final class AdminAbTestVariantApiController extends Controller
         return $this->ok($view, 201);
     }
 
-    public function update(Request $request, AbTest $abTest, AbTestVariant $variant): \Illuminate\Http\JsonResponse
+    public function update(Request $request, AbTest $abTest, AbTestVariant $variant): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -77,14 +79,14 @@ final class AdminAbTestVariantApiController extends Controller
         return $this->ok($view);
     }
 
-    public function destroy(AbTest $abTest, AbTestVariant $variant): \Illuminate\Http\JsonResponse
+    public function destroy(AbTest $abTest, AbTestVariant $variant): JsonResponse
     {
         $view = $this->deleteVariant->execute($abTest->id, $variant->id);
 
         return $this->ok($view);
     }
 
-    private function ok(\App\Domain\AbTesting\ReadModels\AbTestManagementView $view, int $status = 200): \Illuminate\Http\JsonResponse
+    private function ok(AbTestManagementView $view, int $status = 200): JsonResponse
     {
         return $this->respond(new AdminAbTestManagementResource($view), status: $status);
     }

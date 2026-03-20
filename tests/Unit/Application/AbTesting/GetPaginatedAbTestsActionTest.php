@@ -15,6 +15,7 @@ use Tests\TestCase;
 final class GetPaginatedAbTestsActionTest extends TestCase
 {
     private AbTestRepository&MockInterface $tests;
+
     private GetPaginatedAbTestsAction $action;
 
     protected function setUp(): void

@@ -13,6 +13,7 @@ use Tests\TestCase;
 final class GetAbTestAudienceEstimateActionTest extends TestCase
 {
     private UserRepository&MockInterface $users;
+
     private GetAbTestAudienceEstimateAction $action;
 
     protected function setUp(): void

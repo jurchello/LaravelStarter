@@ -26,7 +26,7 @@ final readonly class GetReadinessAction
     }
 
     /**
-     * @param array{db: bool, redis: bool, queue: bool} $checks
+     * @param  array{db: bool, redis: bool, queue: bool}  $checks
      */
     private function allPassed(array $checks): bool
     {

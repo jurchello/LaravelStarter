@@ -15,6 +15,7 @@ use Tests\TestCase;
 final class GetPaginatedUsersActionTest extends TestCase
 {
     private UserRepository&MockInterface $users;
+
     private GetPaginatedUsersAction $action;
 
     protected function setUp(): void

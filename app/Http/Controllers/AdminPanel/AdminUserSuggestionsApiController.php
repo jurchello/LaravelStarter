@@ -8,6 +8,7 @@ use App\Application\User\GetUserSearchSuggestionsAction;
 use App\Http\Controllers\Concerns\RespondsWithApiEnvelope;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\StringListResource;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class AdminUserSuggestionsApiController extends Controller
@@ -18,7 +19,7 @@ final class AdminUserSuggestionsApiController extends Controller
         private readonly GetUserSearchSuggestionsAction $suggestions,
     ) {}
 
-    public function __invoke(Request $request): \Illuminate\Http\JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
         $query = trim($request->string('query')->toString());
 

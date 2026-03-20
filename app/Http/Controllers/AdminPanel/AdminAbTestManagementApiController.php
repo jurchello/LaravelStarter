@@ -12,10 +12,12 @@ use App\Application\AbTesting\UpdateAbTestStatusAction;
 use App\Domain\AbTesting\Dto\AbTestData;
 use App\Domain\AbTesting\Enums\AbTestDistributionMode;
 use App\Domain\AbTesting\Enums\AbTestStatus;
+use App\Domain\AbTesting\ReadModels\AbTestManagementView;
 use App\Http\Controllers\Concerns\RespondsWithApiEnvelope;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AdminPanel\AdminAbTestManagementResource;
 use App\Models\AbTest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -32,12 +34,12 @@ final class AdminAbTestManagementApiController extends Controller
         private readonly UpdateAbTestStatusAction $updateStatus,
     ) {}
 
-    public function show(AbTest $abTest): \Illuminate\Http\JsonResponse
+    public function show(AbTest $abTest): JsonResponse
     {
         return $this->ok($this->getTest->execute($abTest->id));
     }
 
-    public function store(Request $request): \Illuminate\Http\JsonResponse
+    public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -63,7 +65,7 @@ final class AdminAbTestManagementApiController extends Controller
         return $this->ok($view, 201);
     }
 
-    public function update(Request $request, AbTest $abTest): \Illuminate\Http\JsonResponse
+    public function update(Request $request, AbTest $abTest): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -91,14 +93,14 @@ final class AdminAbTestManagementApiController extends Controller
         return $this->ok($view);
     }
 
-    public function destroy(AbTest $abTest): \Illuminate\Http\JsonResponse
+    public function destroy(AbTest $abTest): JsonResponse
     {
         $this->deleteTest->execute($abTest->id);
 
         return $this->respond(null);
     }
 
-    public function updateStatus(Request $request, AbTest $abTest): \Illuminate\Http\JsonResponse
+    public function updateStatus(Request $request, AbTest $abTest): JsonResponse
     {
         $validated = $request->validate([
             'status' => ['required', Rule::enum(AbTestStatus::class)],
@@ -109,7 +111,7 @@ final class AdminAbTestManagementApiController extends Controller
         return $this->ok($view);
     }
 
-    private function ok(\App\Domain\AbTesting\ReadModels\AbTestManagementView $view, int $status = 200): \Illuminate\Http\JsonResponse
+    private function ok(AbTestManagementView $view, int $status = 200): JsonResponse
     {
         return $this->respond(new AdminAbTestManagementResource($view), status: $status);
     }

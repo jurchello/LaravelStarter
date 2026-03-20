@@ -21,7 +21,7 @@ final class EloquentFeatureFlagRepositoryTest extends TestCase
     {
         parent::setUp();
 
-        $this->repository = new EloquentFeatureFlagRepository();
+        $this->repository = new EloquentFeatureFlagRepository;
     }
 
     public function test_paginates_feature_flags(): void

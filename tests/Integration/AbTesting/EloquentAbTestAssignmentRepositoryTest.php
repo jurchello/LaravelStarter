@@ -25,7 +25,7 @@ final class EloquentAbTestAssignmentRepositoryTest extends TestCase
     {
         parent::setUp();
 
-        $this->repository = new EloquentAbTestAssignmentRepository();
+        $this->repository = new EloquentAbTestAssignmentRepository;
     }
 
     public function test_finds_assignment_by_test_and_visitor(): void

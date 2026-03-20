@@ -13,6 +13,7 @@ use Tests\TestCase;
 final class GetAbTestSearchSuggestionsActionTest extends TestCase
 {
     private AbTestRepository&MockInterface $tests;
+
     private GetAbTestSearchSuggestionsAction $action;
 
     protected function setUp(): void

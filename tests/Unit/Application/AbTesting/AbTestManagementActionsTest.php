@@ -10,6 +10,7 @@ use App\Application\AbTesting\DeleteAbTestAction;
 use App\Application\AbTesting\DeleteAbTestVariantAction;
 use App\Application\AbTesting\Exceptions\AbTestConfigurationInvalid;
 use App\Application\AbTesting\Exceptions\AbTestNotFound;
+use App\Application\AbTesting\Exceptions\AbTestVariantNotFound;
 use App\Application\AbTesting\GetAbTestManagementViewAction;
 use App\Application\AbTesting\UpdateAbTestAction;
 use App\Application\AbTesting\UpdateAbTestStatusAction;
@@ -34,6 +35,7 @@ final class AbTestManagementActionsTest extends TestCase
     use MockeryPHPUnitIntegration;
 
     private AbTestRepository&MockInterface $tests;
+
     private AbTestMutationPolicy $mutationPolicy;
 
     protected function setUp(): void
@@ -41,7 +43,7 @@ final class AbTestManagementActionsTest extends TestCase
         parent::setUp();
 
         $this->tests = Mockery::mock(AbTestRepository::class);
-        $this->mutationPolicy = new AbTestMutationPolicy();
+        $this->mutationPolicy = new AbTestMutationPolicy;
     }
 
     public function test_get_management_view_returns_test(): void
@@ -83,7 +85,7 @@ final class AbTestManagementActionsTest extends TestCase
             $this->view(status: 'active', trafficPercent: 50, variants: [$this->variant()]),
         );
 
-        $action = new UpdateAbTestAction($this->tests, new AbTestActivationPolicy(), $this->mutationPolicy);
+        $action = new UpdateAbTestAction($this->tests, new AbTestActivationPolicy, $this->mutationPolicy);
 
         $this->expectException(AbTestConfigurationInvalid::class);
 
@@ -107,7 +109,7 @@ final class AbTestManagementActionsTest extends TestCase
             $this->view(status: 'draft', variants: []),
         );
 
-        $action = new UpdateAbTestStatusAction($this->tests, new AbTestActivationPolicy(), $this->mutationPolicy);
+        $action = new UpdateAbTestStatusAction($this->tests, new AbTestActivationPolicy, $this->mutationPolicy);
 
         $this->expectException(AbTestConfigurationInvalid::class);
 
@@ -121,7 +123,7 @@ final class AbTestManagementActionsTest extends TestCase
             $this->view(status: 'active', variants: []),
         );
 
-        $action = new CreateAbTestVariantAction($this->tests, new AbTestActivationPolicy(), $this->mutationPolicy);
+        $action = new CreateAbTestVariantAction($this->tests, new AbTestActivationPolicy, $this->mutationPolicy);
 
         $this->expectException(AbTestConfigurationInvalid::class);
 
@@ -136,9 +138,9 @@ final class AbTestManagementActionsTest extends TestCase
         );
         $this->tests->shouldReceive('updateVariant')->once()->with(10, 20, $data)->andReturn(null);
 
-        $action = new UpdateAbTestVariantAction($this->tests, new AbTestActivationPolicy(), $this->mutationPolicy);
+        $action = new UpdateAbTestVariantAction($this->tests, new AbTestActivationPolicy, $this->mutationPolicy);
 
-        $this->expectException(\App\Application\AbTesting\Exceptions\AbTestVariantNotFound::class);
+        $this->expectException(AbTestVariantNotFound::class);
 
         $action->execute(10, 20, $data);
     }
@@ -150,9 +152,9 @@ final class AbTestManagementActionsTest extends TestCase
         );
         $this->tests->shouldReceive('deleteVariant')->once()->with(10, 20)->andReturn(null);
 
-        $action = new DeleteAbTestVariantAction($this->tests, new AbTestActivationPolicy(), $this->mutationPolicy);
+        $action = new DeleteAbTestVariantAction($this->tests, new AbTestActivationPolicy, $this->mutationPolicy);
 
-        $this->expectException(\App\Application\AbTesting\Exceptions\AbTestVariantNotFound::class);
+        $this->expectException(AbTestVariantNotFound::class);
 
         $action->execute(10, 20);
     }
@@ -164,7 +166,7 @@ final class AbTestManagementActionsTest extends TestCase
             $this->view(status: 'active', variants: [$this->variant()], slug: 'original-slug'),
         );
 
-        $action = new UpdateAbTestAction($this->tests, new AbTestActivationPolicy(), $this->mutationPolicy);
+        $action = new UpdateAbTestAction($this->tests, new AbTestActivationPolicy, $this->mutationPolicy);
 
         $this->expectException(AbTestConfigurationInvalid::class);
         $this->expectExceptionMessage('Test slug cannot change after creation.');
@@ -179,7 +181,7 @@ final class AbTestManagementActionsTest extends TestCase
             $this->view(status: 'paused', variants: [$this->variant()]),
         );
 
-        $action = new UpdateAbTestVariantAction($this->tests, new AbTestActivationPolicy(), $this->mutationPolicy);
+        $action = new UpdateAbTestVariantAction($this->tests, new AbTestActivationPolicy, $this->mutationPolicy);
 
         $this->expectException(AbTestConfigurationInvalid::class);
 
@@ -192,7 +194,7 @@ final class AbTestManagementActionsTest extends TestCase
             $this->view(status: 'finished', variants: [$this->variant()]),
         );
 
-        $action = new UpdateAbTestStatusAction($this->tests, new AbTestActivationPolicy(), $this->mutationPolicy);
+        $action = new UpdateAbTestStatusAction($this->tests, new AbTestActivationPolicy, $this->mutationPolicy);
 
         $this->expectException(AbTestConfigurationInvalid::class);
 
@@ -213,7 +215,7 @@ final class AbTestManagementActionsTest extends TestCase
         $this->tests->shouldReceive('findManagementView')->once()->with(10)->andReturn($current);
         $this->tests->shouldReceive('updateManagementView')->once()->with(10, $data)->andReturn($updated);
 
-        $action = new UpdateAbTestAction($this->tests, new AbTestActivationPolicy(), $this->mutationPolicy);
+        $action = new UpdateAbTestAction($this->tests, new AbTestActivationPolicy, $this->mutationPolicy);
 
         self::assertSame($updated, $action->execute(10, $data));
     }

@@ -7,6 +7,7 @@ namespace App\Domain\User\ValueObjects;
 final readonly class ImpersonationSession
 {
     public const IMPERSONATOR_ID = 'impersonator_id';
+
     public const IMPERSONATOR_NAME = 'impersonator_name';
 
     public function __construct(

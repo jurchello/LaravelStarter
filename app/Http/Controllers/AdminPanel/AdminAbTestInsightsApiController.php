@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\AdminPanel;
 
-use App\Application\AbTesting\GetAbTestManagementViewAction;
 use App\Application\AbTesting\GetAbTestAudienceEstimateAction;
+use App\Application\AbTesting\GetAbTestManagementViewAction;
 use App\Application\AbTesting\GetPaginatedAbTestAssignmentsAction;
 use App\Application\AbTesting\GetPaginatedAbTestEventsAction;
 use App\Http\Controllers\Concerns\RespondsWithApiEnvelope;
@@ -16,6 +16,7 @@ use App\Http\Resources\AdminPanel\AdminAbTestEventResource;
 use App\Http\Resources\AdminPanel\AdminAbTestManagementResource;
 use App\Http\Resources\Api\PaginationMetaResource;
 use App\Models\AbTest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class AdminAbTestInsightsApiController extends Controller
@@ -29,7 +30,7 @@ final class AdminAbTestInsightsApiController extends Controller
         private readonly GetAbTestAudienceEstimateAction $getAudienceEstimate,
     ) {}
 
-    public function audienceEstimate(Request $request): \Illuminate\Http\JsonResponse
+    public function audienceEstimate(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'trafficPercent' => ['required', 'integer', 'between:0,100'],
@@ -40,7 +41,7 @@ final class AdminAbTestInsightsApiController extends Controller
         ));
     }
 
-    public function assignments(Request $request, AbTest $abTest): \Illuminate\Http\JsonResponse
+    public function assignments(Request $request, AbTest $abTest): JsonResponse
     {
         $result = $this->getAssignments->execute($abTest->id, $request->integer('page', 1), 50);
 
@@ -57,7 +58,7 @@ final class AdminAbTestInsightsApiController extends Controller
         );
     }
 
-    public function events(Request $request, AbTest $abTest): \Illuminate\Http\JsonResponse
+    public function events(Request $request, AbTest $abTest): JsonResponse
     {
         $result = $this->getEvents->execute($abTest->id, $request->integer('page', 1), 50);
 
@@ -74,7 +75,7 @@ final class AdminAbTestInsightsApiController extends Controller
         );
     }
 
-    public function analytics(AbTest $abTest): \Illuminate\Http\JsonResponse
+    public function analytics(AbTest $abTest): JsonResponse
     {
         return $this->respond(new AdminAbTestManagementResource(
             $this->getAnalytics->execute($abTest->id),

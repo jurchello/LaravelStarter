@@ -9,6 +9,7 @@ use App\Domain\Storage\Repositories\FileStorage;
 use App\Domain\Storage\ValueObjects\StoredFilePath;
 use App\Infrastructure\Storage\Exceptions\StorageOperationFailed;
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
+use Illuminate\Contracts\Filesystem\Filesystem;
 
 final readonly class LaravelFileStorage implements FileStorage
 {
@@ -66,7 +67,7 @@ final readonly class LaravelFileStorage implements FileStorage
         }
     }
 
-    private function filesystem(): \Illuminate\Contracts\Filesystem\Filesystem
+    private function filesystem(): Filesystem
     {
         return $this->filesystems->disk($this->disk);
     }

@@ -8,12 +8,13 @@ use App\Application\User\GetPaginatedUsersAction;
 use App\Application\User\UpdateUserRolesAction;
 use App\Domain\AccessControl\Repositories\RoleRepository;
 use App\Domain\User\Dto\UserRolesData;
-use App\Domain\User\Entities\User as DomainUser;
 use App\Domain\User\ValueObjects\UserListQuery;
 use App\Http\Controllers\Concerns\RespondsWithApiEnvelope;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AdminPanel\AdminUserResource;
 use App\Http\Resources\Api\PaginationMetaResource;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class AdminUsersApiController extends Controller
@@ -26,7 +27,7 @@ final class AdminUsersApiController extends Controller
         private readonly RoleRepository $roles,
     ) {}
 
-    public function __invoke(Request $request): \Illuminate\Http\JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
         $query = UserListQuery::fromScalars(
             page: $request->integer('page', 1),
@@ -53,7 +54,7 @@ final class AdminUsersApiController extends Controller
         );
     }
 
-    public function updateRoles(Request $request, \App\Models\User $user): \Illuminate\Http\JsonResponse
+    public function updateRoles(Request $request, User $user): JsonResponse
     {
         $payload = $request->validate([
             'roles' => ['array'],

@@ -2,17 +2,17 @@
 
 use App\Http\Controllers\AdminPanel\AdminAbTestInsightsApiController;
 use App\Http\Controllers\AdminPanel\AdminAbTestManagementApiController;
+use App\Http\Controllers\AdminPanel\AdminAbTestsApiController;
 use App\Http\Controllers\AdminPanel\AdminAbTestSuggestionsApiController;
 use App\Http\Controllers\AdminPanel\AdminAbTestVariantApiController;
-use App\Http\Controllers\AdminPanel\AdminAbTestsApiController;
 use App\Http\Controllers\AdminPanel\AdminDashboardApiController;
-use App\Http\Controllers\AdminPanel\AdminFeatureFlagSuggestionsApiController;
 use App\Http\Controllers\AdminPanel\AdminFeatureFlagsApiController;
-use App\Http\Controllers\AdminPanel\AdminRoleSuggestionsApiController;
+use App\Http\Controllers\AdminPanel\AdminFeatureFlagSuggestionsApiController;
 use App\Http\Controllers\AdminPanel\AdminRolesApiController;
+use App\Http\Controllers\AdminPanel\AdminRoleSuggestionsApiController;
 use App\Http\Controllers\AdminPanel\AdminUserImpersonationApiController;
-use App\Http\Controllers\AdminPanel\AdminUserSuggestionsApiController;
 use App\Http\Controllers\AdminPanel\AdminUsersApiController;
+use App\Http\Controllers\AdminPanel\AdminUserSuggestionsApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('management/api')

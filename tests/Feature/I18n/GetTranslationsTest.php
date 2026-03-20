@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature\I18n;
 
 use App\Domain\I18n\TranslationLoader;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 final class GetTranslationsTest extends TestCase

@@ -1,5 +1,6 @@
 <?php
 
+use App\Infrastructure\Logging\JsonLogTap;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -62,7 +63,7 @@ return [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
-            'tap' => [App\Infrastructure\Logging\JsonLogTap::class],
+            'tap' => [JsonLogTap::class],
             'replace_placeholders' => true,
         ],
 
@@ -71,7 +72,7 @@ return [
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
-            'tap' => [App\Infrastructure\Logging\JsonLogTap::class],
+            'tap' => [JsonLogTap::class],
             'replace_placeholders' => true,
         ],
 

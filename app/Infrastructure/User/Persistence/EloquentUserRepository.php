@@ -11,7 +11,6 @@ use App\Domain\User\ValueObjects\UserListQuery;
 use App\Models\User as UserModel;
 use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Builder;
-use Spatie\Permission\Models\Role;
 
 final class EloquentUserRepository implements UserRepository
 {

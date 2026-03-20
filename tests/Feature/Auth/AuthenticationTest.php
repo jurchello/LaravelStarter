@@ -10,8 +10,8 @@ use Database\Factories\AbTestAssignmentFactory;
 use Database\Factories\AbTestFactory;
 use Database\Factories\AbTestVariantFactory;
 use Illuminate\Cookie\Middleware\EncryptCookies;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 final class AuthenticationTest extends TestCase

@@ -15,6 +15,7 @@ use Tests\TestCase;
 final class GetPaginatedFeatureFlagsActionTest extends TestCase
 {
     private FeatureFlagRepository&MockInterface $flags;
+
     private GetPaginatedFeatureFlagsAction $action;
 
     protected function setUp(): void

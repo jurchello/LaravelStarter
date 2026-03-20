@@ -17,7 +17,7 @@ final class TrackEventRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'test'  => ['required', 'string'],
+            'test' => ['required', 'string'],
             'event' => ['required', 'string'],
         ];
     }

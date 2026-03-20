@@ -8,6 +8,7 @@ use App\Application\AbTesting\GetAbTestSearchSuggestionsAction;
 use App\Http\Controllers\Concerns\RespondsWithApiEnvelope;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\StringListResource;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class AdminAbTestSuggestionsApiController extends Controller
@@ -18,7 +19,7 @@ final class AdminAbTestSuggestionsApiController extends Controller
         private readonly GetAbTestSearchSuggestionsAction $suggestions,
     ) {}
 
-    public function __invoke(Request $request): \Illuminate\Http\JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
         $query = trim($request->string('query')->toString());
 

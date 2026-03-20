@@ -256,7 +256,7 @@ final class GoogleAuthenticationTest extends TestCase
 
     private function fakeGoogleUser(string $id, string $email, string $name, ?string $avatar = null): OAuthUser
     {
-        return tap(new OAuthUser(), function (OAuthUser $user) use ($id, $email, $name, $avatar): void {
+        return tap(new OAuthUser, function (OAuthUser $user) use ($id, $email, $name, $avatar): void {
             $user->setRaw([
                 'sub' => $id,
                 'email' => $email,

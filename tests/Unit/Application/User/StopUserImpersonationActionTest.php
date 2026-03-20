@@ -20,7 +20,7 @@ final class StopUserImpersonationActionTest extends TestCase
     {
         parent::setUp();
 
-        $this->action = new StopUserImpersonationAction();
+        $this->action = new StopUserImpersonationAction;
     }
 
     public function test_returns_verified_admin_to_restore_session(): void

@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Integration\AbTesting;
 
-use App\Domain\AbTesting\Enums\AbTestStatus;
-use App\Domain\AbTesting\Enums\AbTestDistributionMode;
 use App\Domain\AbTesting\Dto\AbTestData;
 use App\Domain\AbTesting\Dto\AbTestVariantData;
+use App\Domain\AbTesting\Entities\AbTest;
+use App\Domain\AbTesting\Enums\AbTestDistributionMode;
+use App\Domain\AbTesting\Enums\AbTestStatus;
 use App\Domain\AbTesting\ValueObjects\AbTestListQuery;
 use App\Infrastructure\AbTesting\Persistence\EloquentAbTestRepository;
 use App\Models\AbTest as AbTestModel;
@@ -28,7 +29,7 @@ final class EloquentAbTestRepositoryTest extends TestCase
     {
         parent::setUp();
 
-        $this->repository = new EloquentAbTestRepository();
+        $this->repository = new EloquentAbTestRepository;
     }
 
     public function test_finds_active_test_by_slug(): void
@@ -40,7 +41,7 @@ final class EloquentAbTestRepositoryTest extends TestCase
 
         $result = $this->repository->findActiveBySlug('my-test');
 
-        $this->assertInstanceOf(\App\Domain\AbTesting\Entities\AbTest::class, $result);
+        $this->assertInstanceOf(AbTest::class, $result);
         $this->assertNotNull($result);
         $this->assertSame('my-test', $result->slug);
     }
@@ -82,7 +83,7 @@ final class EloquentAbTestRepositoryTest extends TestCase
         $result = $this->repository->findActiveBySlug('variant-test');
 
         $this->assertNotNull($result);
-        $this->assertInstanceOf(\App\Domain\AbTesting\Entities\AbTest::class, $result);
+        $this->assertInstanceOf(AbTest::class, $result);
         $this->assertCount(2, $result->variants);
         $this->assertSame('variant-a', $result->variants[0]->slug);
         $this->assertSame('variant-b', $result->variants[1]->slug);

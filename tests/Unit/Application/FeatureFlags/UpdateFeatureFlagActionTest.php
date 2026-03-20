@@ -18,7 +18,9 @@ use Tests\TestCase;
 final class UpdateFeatureFlagActionTest extends TestCase
 {
     private FeatureFlagRepository&MockInterface $flags;
+
     private FeatureFlagRuntime&MockInterface $runtime;
+
     private UpdateFeatureFlagAction $action;
 
     protected function setUp(): void
@@ -62,7 +64,7 @@ final class UpdateFeatureFlagActionTest extends TestCase
         $before = new FeatureFlag(1, 'new-dashboard', 'New Dashboard', null, true, 25);
 
         $this->flags->shouldReceive('findById')->once()->with(1)->andReturn($before);
-        $this->flags->shouldReceive('update')->once()->with(1, $data)->andThrow(new ModelNotFoundException());
+        $this->flags->shouldReceive('update')->once()->with(1, $data)->andThrow(new ModelNotFoundException);
         $this->runtime->shouldNotReceive('purge');
 
         $this->expectException(FeatureFlagNotFound::class);

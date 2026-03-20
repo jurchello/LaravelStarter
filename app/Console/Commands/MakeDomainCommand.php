@@ -19,6 +19,7 @@ final class MakeDomainCommand extends Command
 
         if (! preg_match('/^[A-Z][a-zA-Z0-9]*$/', $name)) {
             $this->error('Name must be PascalCase (e.g. Idea, AiReport).');
+
             return self::FAILURE;
         }
 
@@ -33,12 +34,12 @@ final class MakeDomainCommand extends Command
         $this->info("✓ Domain [{$name}] scaffolded successfully.");
         $this->newLine();
         $this->warn('Next steps:');
-        $this->line('  1. Fill in DTO properties in App\\Domain\\' . $name . '\\Dto\\' . $name . 'Dto');
+        $this->line('  1. Fill in DTO properties in App\\Domain\\'.$name.'\\Dto\\'.$name.'Dto');
         $this->line('  2. Add migration columns in the generated migration file');
-        $this->line('  3. Create Actions manually in app/Application/' . $name . '/');
+        $this->line('  3. Create Actions manually in app/Application/'.$name.'/');
         $this->line('  4. Register binding in App\\Providers\\AppServiceProvider:');
-        $this->line('       $this->app->bind(\\App\\Domain\\' . $name . '\\Repositories\\' . $name . 'Repository::class,');
-        $this->line('                         \\App\\Infrastructure\\' . $name . '\\Persistence\\Eloquent' . $name . 'Repository::class);');
+        $this->line('       $this->app->bind(\\App\\Domain\\'.$name.'\\Repositories\\'.$name.'Repository::class,');
+        $this->line('                         \\App\\Infrastructure\\'.$name.'\\Persistence\\Eloquent'.$name.'Repository::class);');
         $this->line('  5. Add routes in routes/site_api.php or routes/site_web.php');
 
         return self::SUCCESS;
@@ -101,6 +102,7 @@ final class MakeDomainCommand extends Command
 
         if (file_exists($path)) {
             $this->line("  <fg=yellow>SKIP</> app/Models/{$name}.php (already exists)");
+
             return;
         }
 
@@ -182,6 +184,7 @@ final class MakeDomainCommand extends Command
 
         if (file_exists($path)) {
             $this->line("  <fg=yellow>SKIP</> {$relativePath} (already exists)");
+
             return;
         }
 

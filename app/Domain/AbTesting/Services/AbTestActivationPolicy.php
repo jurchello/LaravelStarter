@@ -10,7 +10,7 @@ use App\Domain\AbTesting\ReadModels\AbTestManagementVariant;
 final readonly class AbTestActivationPolicy
 {
     /**
-     * @param array<int, AbTestManagementVariant> $variants
+     * @param  array<int, AbTestManagementVariant>  $variants
      * @return array<int, string>
      */
     public function violations(int $trafficPercent, AbTestDistributionMode $distributionMode, array $variants): array

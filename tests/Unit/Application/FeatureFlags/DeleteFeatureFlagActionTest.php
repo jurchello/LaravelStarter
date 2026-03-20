@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application\FeatureFlags;
 
-use App\Application\FeatureFlags\Exceptions\FeatureFlagNotFound;
 use App\Application\FeatureFlags\DeleteFeatureFlagAction;
+use App\Application\FeatureFlags\Exceptions\FeatureFlagNotFound;
 use App\Domain\FeatureFlags\Contracts\FeatureFlagRuntime;
 use App\Domain\FeatureFlags\Entities\FeatureFlag;
 use App\Domain\FeatureFlags\Repositories\FeatureFlagRepository;
@@ -17,7 +17,9 @@ use Tests\TestCase;
 final class DeleteFeatureFlagActionTest extends TestCase
 {
     private FeatureFlagRepository&MockInterface $flags;
+
     private FeatureFlagRuntime&MockInterface $runtime;
+
     private DeleteFeatureFlagAction $action;
 
     protected function setUp(): void
@@ -56,7 +58,7 @@ final class DeleteFeatureFlagActionTest extends TestCase
         $flag = new FeatureFlag(1, 'new-dashboard', 'New Dashboard', null, true, 25);
 
         $this->flags->shouldReceive('findById')->once()->with(1)->andReturn($flag);
-        $this->flags->shouldReceive('delete')->once()->with(1)->andThrow(new ModelNotFoundException());
+        $this->flags->shouldReceive('delete')->once()->with(1)->andThrow(new ModelNotFoundException);
         $this->runtime->shouldNotReceive('purge');
 
         $this->expectException(FeatureFlagNotFound::class);

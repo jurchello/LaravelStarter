@@ -8,8 +8,9 @@ use App\Application\AbTesting\Exceptions\AbTestConfigurationInvalid;
 use App\Application\AbTesting\Exceptions\AbTestNotFound;
 use App\Application\AbTesting\Exceptions\AbTestVariantNotFound;
 use App\Domain\AbTesting\Dto\AbTestVariantData;
-use App\Domain\AbTesting\ReadModels\AbTestManagementView;
 use App\Domain\AbTesting\Enums\AbTestStatus;
+use App\Domain\AbTesting\ReadModels\AbTestManagementVariant;
+use App\Domain\AbTesting\ReadModels\AbTestManagementView;
 use App\Domain\AbTesting\Repositories\AbTestRepository;
 use App\Domain\AbTesting\Services\AbTestActivationPolicy;
 use App\Domain\AbTesting\Services\AbTestMutationPolicy;
@@ -38,7 +39,7 @@ final readonly class UpdateAbTestVariantAction
 
             $variantFound = true;
 
-            return new \App\Domain\AbTesting\ReadModels\AbTestManagementVariant(
+            return new AbTestManagementVariant(
                 id: $variant->id,
                 name: $data->name,
                 slug: $data->slug,

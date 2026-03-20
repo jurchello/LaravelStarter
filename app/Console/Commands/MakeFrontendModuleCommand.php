@@ -22,6 +22,7 @@ final class MakeFrontendModuleCommand extends Command
 
         if (! preg_match('/^[a-z][a-z0-9-]*$/', $name)) {
             $this->error('Name must be kebab-case (e.g. ideas, ai-report).');
+
             return self::FAILURE;
         }
 
@@ -99,6 +100,7 @@ final class MakeFrontendModuleCommand extends Command
 
         if (file_exists($path)) {
             $this->line("  <fg=yellow>SKIP</> {$relativePath} (already exists)");
+
             return;
         }
 

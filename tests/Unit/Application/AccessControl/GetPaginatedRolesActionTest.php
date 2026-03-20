@@ -15,6 +15,7 @@ use Tests\TestCase;
 final class GetPaginatedRolesActionTest extends TestCase
 {
     private RoleRepository&MockInterface $roles;
+
     private GetPaginatedRolesAction $action;
 
     protected function setUp(): void

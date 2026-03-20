@@ -20,8 +20,11 @@ use Tests\TestCase;
 final class AssignVariantActionTest extends TestCase
 {
     private AbTestRepository&MockInterface $tests;
+
     private AbTestAssignmentRepository&MockInterface $assignments;
+
     private Randomizer&MockInterface $randomizer;
+
     private AssignVariantAction $action;
 
     protected function setUp(): void

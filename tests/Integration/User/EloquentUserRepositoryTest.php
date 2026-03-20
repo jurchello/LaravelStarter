@@ -20,7 +20,7 @@ final class EloquentUserRepositoryTest extends TestCase
     {
         parent::setUp();
 
-        $this->repository = new EloquentUserRepository();
+        $this->repository = new EloquentUserRepository;
     }
 
     public function test_syncs_roles_for_user(): void

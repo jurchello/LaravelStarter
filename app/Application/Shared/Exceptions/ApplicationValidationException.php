@@ -6,6 +6,4 @@ namespace App\Application\Shared\Exceptions;
 
 use RuntimeException;
 
-abstract class ApplicationValidationException extends RuntimeException
-{
-}
+abstract class ApplicationValidationException extends RuntimeException {}

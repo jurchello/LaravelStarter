@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Domain\AbTesting\Repositories;
 
-use App\Domain\AbTesting\Entities\AbTest;
-use App\Domain\AbTesting\ReadModels\PaginatedAbTestAssignments;
-use App\Domain\AbTesting\ReadModels\PaginatedAbTestEvents;
-use App\Domain\AbTesting\ReadModels\AbTestManagementView;
-use App\Domain\AbTesting\ReadModels\PaginatedAbTests;
 use App\Domain\AbTesting\Dto\AbTestData;
 use App\Domain\AbTesting\Dto\AbTestVariantData;
+use App\Domain\AbTesting\Entities\AbTest;
 use App\Domain\AbTesting\Enums\AbTestStatus;
+use App\Domain\AbTesting\ReadModels\AbTestManagementView;
+use App\Domain\AbTesting\ReadModels\PaginatedAbTestAssignments;
+use App\Domain\AbTesting\ReadModels\PaginatedAbTestEvents;
+use App\Domain\AbTesting\ReadModels\PaginatedAbTests;
 use App\Domain\AbTesting\ValueObjects\AbTestListQuery;
 
 interface AbTestRepository

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\User\Repositories;
 
+use App\Domain\User\Entities\User;
 use App\Domain\User\ReadModels\PaginatedUsers;
 use App\Domain\User\ValueObjects\UserListQuery;
 
@@ -14,9 +15,9 @@ interface UserRepository
     public function countAudience(): int;
 
     /**
-     * @param array<int, string> $roles
+     * @param  array<int, string>  $roles
      */
-    public function syncRoles(int $userId, array $roles): \App\Domain\User\Entities\User;
+    public function syncRoles(int $userId, array $roles): User;
 
     /**
      * @return array<int, string>

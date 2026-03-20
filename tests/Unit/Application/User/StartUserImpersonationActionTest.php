@@ -18,12 +18,12 @@ final class StartUserImpersonationActionTest extends TestCase
     {
         parent::setUp();
 
-        $this->action = new StartUserImpersonationAction();
+        $this->action = new StartUserImpersonationAction;
     }
 
     public function test_creates_impersonation_session_for_verified_admin(): void
     {
-        $admin = new User();
+        $admin = new User;
         $admin->forceFill([
             'name' => 'Admin User',
             'email' => 'admin@example.com',
@@ -32,7 +32,7 @@ final class StartUserImpersonationActionTest extends TestCase
         ]);
         $admin->id = 10;
 
-        $target = new User();
+        $target = new User;
         $target->forceFill([
             'name' => 'Target User',
             'email' => 'target@example.com',
@@ -49,7 +49,7 @@ final class StartUserImpersonationActionTest extends TestCase
 
     public function test_throws_for_same_user(): void
     {
-        $admin = new User();
+        $admin = new User;
         $admin->forceFill([
             'name' => 'Admin User',
             'email' => 'admin@example.com',

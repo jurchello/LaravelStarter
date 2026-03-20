@@ -9,9 +9,9 @@ use App\Domain\AbTesting\Enums\AbTestDistributionMode;
 final readonly class AbTestManagementView
 {
     /**
-     * @param array<int, AbTestManagementVariant> $variants
-     * @param array<int, AbTestRecentAssignment> $recentAssignments
-     * @param array<int, AbTestRecentEvent> $recentEvents
+     * @param  array<int, AbTestManagementVariant>  $variants
+     * @param  array<int, AbTestRecentAssignment>  $recentAssignments
+     * @param  array<int, AbTestRecentEvent>  $recentEvents
      */
     public function __construct(
         public int $id,

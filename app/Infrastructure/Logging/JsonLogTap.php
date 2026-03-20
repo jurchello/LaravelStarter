@@ -12,7 +12,7 @@ final class JsonLogTap
     public function __invoke(Logger $logger): void
     {
         foreach ($logger->getLogger()->getHandlers() as $handler) {
-            $handler->setFormatter(new JsonFormatter());
+            $handler->setFormatter(new JsonFormatter);
         }
     }
 }

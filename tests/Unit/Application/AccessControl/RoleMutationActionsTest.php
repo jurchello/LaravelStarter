@@ -35,7 +35,7 @@ final class RoleMutationActionsTest extends TestCase
         $this->roles->shouldReceive('update')
             ->with(5, $data)
             ->once()
-            ->andThrow(new ModelNotFoundException());
+            ->andThrow(new ModelNotFoundException);
 
         $this->expectException(RoleNotFound::class);
 
@@ -49,7 +49,7 @@ final class RoleMutationActionsTest extends TestCase
         $this->roles->shouldReceive('delete')
             ->with(5)
             ->once()
-            ->andThrow(new ModelNotFoundException());
+            ->andThrow(new ModelNotFoundException);
 
         $this->expectException(RoleNotFound::class);
 
@@ -64,7 +64,7 @@ final class RoleMutationActionsTest extends TestCase
         $this->roles->shouldReceive('syncPermissions')
             ->with(5, $data)
             ->once()
-            ->andThrow(new ModelNotFoundException());
+            ->andThrow(new ModelNotFoundException);
 
         $this->expectException(RoleNotFound::class);
 

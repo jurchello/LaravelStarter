@@ -43,7 +43,7 @@ final readonly class AuthenticateWithSocialAccountAction
     private function findOrCreateEmailUser(SocialAccountData $account): User
     {
         if ($account->email === null || $account->email === '') {
-            throw new SocialAuthenticationFailed();
+            throw new SocialAuthenticationFailed;
         }
 
         $user = User::query()->firstWhere('email', $account->email);

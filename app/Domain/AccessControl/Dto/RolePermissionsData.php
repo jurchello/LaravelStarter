@@ -12,7 +12,7 @@ final readonly class RolePermissionsData
     ) {}
 
     /**
-     * @param array<int, string> $permissions
+     * @param  array<int, string>  $permissions
      */
     public static function fromScalars(array $permissions): self
     {

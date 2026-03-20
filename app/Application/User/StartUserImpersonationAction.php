@@ -13,7 +13,7 @@ final readonly class StartUserImpersonationAction
     public function execute(?User $admin, User $target): ImpersonationSession
     {
         if (! $admin || ! $admin->is_admin || ! $admin->hasVerifiedEmail() || $admin->is($target)) {
-            throw new CannotImpersonateUser();
+            throw new CannotImpersonateUser;
         }
 
         return new ImpersonationSession(

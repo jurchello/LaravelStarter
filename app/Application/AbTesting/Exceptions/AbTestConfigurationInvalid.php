@@ -9,7 +9,7 @@ use App\Application\Shared\Exceptions\ApplicationValidationException;
 final class AbTestConfigurationInvalid extends ApplicationValidationException
 {
     /**
-     * @param array<int, string> $violations
+     * @param  array<int, string>  $violations
      */
     public static function fromViolations(array $violations): self
     {

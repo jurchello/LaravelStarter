@@ -19,7 +19,7 @@ final class JsonLogTapTest extends TestCase
         $logger = new Logger('test');
         $logger->pushHandler($handler);
 
-        (new JsonLogTap())(new IlluminateLogger($logger));
+        (new JsonLogTap)(new IlluminateLogger($logger));
 
         self::assertInstanceOf(JsonFormatter::class, $handler->getFormatter());
     }

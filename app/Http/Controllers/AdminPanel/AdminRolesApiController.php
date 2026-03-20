@@ -7,8 +7,8 @@ namespace App\Http\Controllers\AdminPanel;
 use App\Application\AccessControl\CreateRoleAction;
 use App\Application\AccessControl\DeleteRoleAction;
 use App\Application\AccessControl\GetPaginatedRolesAction;
-use App\Application\AccessControl\UpdateRolePermissionsAction;
 use App\Application\AccessControl\UpdateRoleAction;
+use App\Application\AccessControl\UpdateRolePermissionsAction;
 use App\Domain\AccessControl\Dto\RoleData;
 use App\Domain\AccessControl\Dto\RolePermissionsData;
 use App\Domain\AccessControl\Repositories\RoleRepository;
@@ -17,6 +17,7 @@ use App\Http\Controllers\Concerns\RespondsWithApiEnvelope;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AdminPanel\AdminRoleResource;
 use App\Http\Resources\Api\PaginationMetaResource;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 
@@ -33,7 +34,7 @@ final class AdminRolesApiController extends Controller
         private readonly RoleRepository $roles,
     ) {}
 
-    public function __invoke(Request $request): \Illuminate\Http\JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
         $query = RoleListQuery::fromScalars(
             page: $request->integer('page', 1),
@@ -59,7 +60,7 @@ final class AdminRolesApiController extends Controller
         );
     }
 
-    public function store(Request $request): \Illuminate\Http\JsonResponse
+    public function store(Request $request): JsonResponse
     {
         $payload = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -72,7 +73,7 @@ final class AdminRolesApiController extends Controller
         ], status: 201);
     }
 
-    public function update(Request $request, Role $role): \Illuminate\Http\JsonResponse
+    public function update(Request $request, Role $role): JsonResponse
     {
         $payload = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -85,7 +86,7 @@ final class AdminRolesApiController extends Controller
         ]);
     }
 
-    public function destroy(Role $role): \Illuminate\Http\JsonResponse
+    public function destroy(Role $role): JsonResponse
     {
         $this->deleteRole->execute((int) $role->id);
 
@@ -94,7 +95,7 @@ final class AdminRolesApiController extends Controller
         ]);
     }
 
-    public function updatePermissions(Request $request, Role $role): \Illuminate\Http\JsonResponse
+    public function updatePermissions(Request $request, Role $role): JsonResponse
     {
         $payload = $request->validate([
             'permissions' => ['array'],

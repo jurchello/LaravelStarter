@@ -11,6 +11,7 @@ use App\Http\Middleware\SetVisitorId;
 use App\Http\Requests\AbTesting\TrackEventRequest;
 use App\Http\Resources\AbTesting\AssignedVariantResource;
 use App\Http\Resources\AbTesting\TrackEventResultResource;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class AbTestingController extends Controller
@@ -20,7 +21,7 @@ final class AbTestingController extends Controller
         private readonly TrackEventAction $trackEvent,
     ) {}
 
-    public function assign(Request $request, string $testSlug): \Illuminate\Http\JsonResponse
+    public function assign(Request $request, string $testSlug): JsonResponse
     {
         $visitorId = $request->cookie(SetVisitorId::COOKIE_NAME);
 
@@ -37,7 +38,7 @@ final class AbTestingController extends Controller
         return (new AssignedVariantResource(['variant' => $variant]))->response();
     }
 
-    public function event(TrackEventRequest $request): \Illuminate\Http\JsonResponse
+    public function event(TrackEventRequest $request): JsonResponse
     {
         $visitorId = $request->cookie(SetVisitorId::COOKIE_NAME);
 

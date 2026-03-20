@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Application\I18n\GetTranslationsAction;
 use App\Http\Resources\I18n\TranslationsResource;
+use Illuminate\Http\JsonResponse;
 
 final class I18nController extends Controller
 {
@@ -13,7 +14,7 @@ final class I18nController extends Controller
         private readonly GetTranslationsAction $action,
     ) {}
 
-    public function index(): \Illuminate\Http\JsonResponse
+    public function index(): JsonResponse
     {
         return (new TranslationsResource(
             $this->action->execute(app()->getLocale())

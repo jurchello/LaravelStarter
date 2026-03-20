@@ -18,6 +18,7 @@ use Tests\TestCase;
 final class UpdateUserRolesActionTest extends TestCase
 {
     private UserRepository&MockInterface $users;
+
     private UpdateUserRolesAction $action;
 
     protected function setUp(): void
@@ -58,7 +59,7 @@ final class UpdateUserRolesActionTest extends TestCase
         $this->users->shouldReceive('syncRoles')
             ->with(8, ['Manager'])
             ->once()
-            ->andThrow(new ModelNotFoundException());
+            ->andThrow(new ModelNotFoundException);
 
         $this->expectException(UserNotFound::class);
 

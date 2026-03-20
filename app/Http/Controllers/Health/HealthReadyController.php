@@ -6,10 +6,11 @@ namespace App\Http\Controllers\Health;
 
 use App\Application\Health\GetReadinessAction;
 use App\Http\Resources\Health\HealthReadyResource;
+use Illuminate\Http\JsonResponse;
 
 final class HealthReadyController
 {
-    public function __invoke(GetReadinessAction $action): \Illuminate\Http\JsonResponse
+    public function __invoke(GetReadinessAction $action): JsonResponse
     {
         $payload = $action->execute();
 
