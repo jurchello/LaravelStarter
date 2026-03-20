@@ -47,6 +47,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-php-8.4-composer-
 
+      - name: Prepare writable Laravel directories
+        run: |
+          mkdir -p bootstrap/cache
+          mkdir -p storage/framework/cache
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/testing
+          mkdir -p storage/framework/views
+          mkdir -p storage/logs
+
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
 
