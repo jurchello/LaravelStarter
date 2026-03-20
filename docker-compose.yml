@@ -1,7 +1,7 @@
 services:
     db:
         image: mariadb:10.11
-        restart: unless-stopped
+        restart: "no"
         environment:
             MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-demo-root-password}
             MARIADB_DATABASE: ${DB_DATABASE:-app}
@@ -16,7 +16,7 @@ services:
 
     redis:
         image: redis:7-alpine
-        restart: unless-stopped
+        restart: "no"
         command: ["redis-server", "--appendonly", "yes"]
         ports:
             - "${FORWARD_REDIS_PORT:-6382}:6379"
@@ -25,7 +25,7 @@ services:
 
     mailpit:
         image: axllent/mailpit:latest
-        restart: unless-stopped
+        restart: "no"
         ports:
             - "1025:1025"
             - "8025:8025"
@@ -36,7 +36,7 @@ services:
             args:
                 WWWUSER: ${WWWUSER:-1000}
                 WWWGROUP: ${WWWGROUP:-1000}
-        restart: unless-stopped
+        restart: "no"
         working_dir: /var/www/html
         volumes:
             - ./:/var/www/html
@@ -79,7 +79,7 @@ services:
             args:
                 WWWUSER: ${WWWUSER:-1000}
                 WWWGROUP: ${WWWGROUP:-1000}
-        restart: unless-stopped
+        restart: "no"
         working_dir: /var/www/html
         command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
         volumes:
@@ -117,7 +117,7 @@ services:
 
     nginx:
         image: nginx:1.27-alpine
-        restart: unless-stopped
+        restart: "no"
         depends_on:
             - php
         ports:
