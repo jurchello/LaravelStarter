@@ -96,6 +96,8 @@ jobs:
         run: npm run lint
 
       - name: Run Vitest
+        env:
+          LARAVEL_BYPASS_ENV_CHECK: 1
         run: npm run test:unit
 
       - name: Build assets
