@@ -1,16 +1,16 @@
 # LaravelStarter
 
-Reusable Laravel SaaS-style template with session auth, admin panel, AB testing, generated API docs, Docker-based local stack, and architecture guardrails.
+Reusable Laravel SaaS-style template with session auth, admin panel, AB testing, generated API docs / Swagger, Docker-based local stack, and architecture guardrails.
 
 Included out of the box:
 
 - session-based auth with registration, login, password reset, email verification, Google sign-in, and admin impersonation
 - public site pages plus a separate admin panel with reusable Blade UI components
-- admin panel management for dashboard metrics, users, roles, feature flags, AB tests, assignments, events, analytics, mail previews, and API docs access
+- admin panel management for dashboard metrics, users, roles, feature flags, AB tests, assignments, events, analytics, mail previews, and API docs / Swagger access
 - AB testing module with test, variant, assignment, event, and analytics flows
 - feature flags with Laravel Pennant runtime integration and admin management UI
 - roles, permissions, managed route-permission sync, and admin-only areas
-- site and admin API endpoints with generated API documentation
+- site and admin API endpoints with generated API documentation / Swagger
 - Docker-based local stack with Nginx, PHP-FPM, MariaDB, Redis, Mailpit, queues, and Vite
 - backend, frontend, architecture, and e2e tests
 - DDD-oriented structure, project docs, standards, and generator stubs for future modules
