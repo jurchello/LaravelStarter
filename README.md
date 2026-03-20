@@ -6,6 +6,7 @@ Included out of the box:
 
 - session-based auth with registration, login, password reset, email verification, Google sign-in, and admin impersonation
 - public site pages plus a separate admin panel with reusable Blade UI components
+- admin panel management for dashboard metrics, users, roles, feature flags, AB tests, assignments, events, analytics, mail previews, and API docs access
 - AB testing module with test, variant, assignment, event, and analytics flows
 - feature flags with Laravel Pennant runtime integration and admin management UI
 - roles, permissions, managed route-permission sync, and admin-only areas
