@@ -1,0 +1,6 @@
+import { connectModules } from '@/core/connect'
+import * as {{ name }} from '@/modules/{{ name }}/init'
+
+connectModules([
+    { id: '{{ name }}', ...{{ name }} },
+])

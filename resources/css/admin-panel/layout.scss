@@ -1,0 +1,20 @@
+@use './tokens';
+@use './base';
+@use './shell';
+@use './components';
+@use './pages';
+
+.toast-container {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.toast-container > * {
+    pointer-events: auto;
+}

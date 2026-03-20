@@ -1,0 +1,11 @@
+// Thin public API facade — re-exports from service.ts only.
+// No logic here.
+
+export {
+    init,
+    // TODO: export other public functions from service.ts
+} from './service'
+
+export type {
+    // TODO: export public types from service.ts
+} from './service'

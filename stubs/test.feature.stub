@@ -1,0 +1,15 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\{{ Name }};
+
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+final class {{ Name }}Test extends TestCase
+{
+    use RefreshDatabase;
+
+    // TODO: add feature tests for {{ Name }} HTTP endpoints
+}

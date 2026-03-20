@@ -1,0 +1,46 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers;
+
+// TODO: inject the relevant Action(s) from App\Application\{{ Name }}\
+// e.g. use App\Application\{{ Name }}\Create{{ Name }}Action;
+use App\Http\Requests\{{ Name }}Request;
+use App\Http\Resources\{{ Name }}Resource;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Symfony\Component\HttpFoundation\Response;
+
+final class {{ Name }}Controller extends Controller
+{
+    public function __construct(
+        // TODO: inject Action(s) here, e.g.:
+        // private readonly Create{{ Name }}Action $create,
+    ) {}
+
+    public function index(): AnonymousResourceCollection
+    {
+        // return {{ Name }}Resource::collection($this->action->execute());
+    }
+
+    public function show(int $id): {{ Name }}Resource
+    {
+        // return new {{ Name }}Resource($this->action->execute($id));
+    }
+
+    public function store({{ Name }}Request $request): {{ Name }}Resource
+    {
+        // return new {{ Name }}Resource($this->action->execute($request->toDto()));
+    }
+
+    public function update({{ Name }}Request $request, int $id): {{ Name }}Resource
+    {
+        // return new {{ Name }}Resource($this->action->execute($id, $request->toDto()));
+    }
+
+    public function destroy(int $id): Response
+    {
+        // $this->action->execute($id);
+        return response()->noContent();
+    }
+}

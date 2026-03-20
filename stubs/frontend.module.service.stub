@@ -1,0 +1,41 @@
+// Core logic for the {{ name }} module.
+// No DOM, no Vue, no direct HTTP calls — use injected clients from shared/http.
+//
+// State lives inside the class — never in module-level variables.
+// Tests create a new instance (new {{ Name }}Service()) to get fresh isolated state.
+// No setModuleState() or other backdoor functions. See docs/standards/testing-standards.md.
+
+import type { {{ Name }}State } from './state'
+
+export type {{ Name }}Context = {
+    // TODO: define context properties passed from connect.ts
+}
+
+type Subscriber = (state: {{ Name }}State) => void
+
+export class {{ Name }}Service {
+    // TODO: define private state fields
+
+    getState(): {{ Name }}State {
+        // TODO: return immutable snapshot
+        throw new Error('not implemented')
+    }
+
+    subscribe(callback: Subscriber): () => void {
+        // TODO: add to subscribers, call immediately with current state, return unsubscribe fn
+        void callback
+        throw new Error('not implemented')
+    }
+
+    init(_context: {{ Name }}Context = {} as {{ Name }}Context): Promise<void> {
+        // TODO: implement initialisation logic
+        return Promise.resolve()
+    }
+}
+
+// Production singleton — one shared instance for the running app.
+const service = new {{ Name }}Service()
+
+// Public API — thin wrappers so callers import functions, not the class instance.
+export const init = (context?: {{ Name }}Context): Promise<void> => service.init(context)
+// TODO: export additional methods (e.g. getVariant, notify, trans) that delegate to service

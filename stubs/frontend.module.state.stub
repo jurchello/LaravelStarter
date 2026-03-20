@@ -1,0 +1,6 @@
+// Types for the {{ name }} module state.
+// No variables, no functions — state lives in the service class.
+
+export type {{ Name }}State = {
+    // TODO: define state shape
+}

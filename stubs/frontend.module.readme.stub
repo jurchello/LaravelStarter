@@ -1,0 +1,40 @@
+# {{ name }}
+
+## Responsibility
+
+- Owns the `{{ name }}` frontend feature boundary.
+- Does not own concerns that belong to other modules.
+
+## Public API
+
+- `init()`
+- Add other public exports only when they are intentionally part of the module contract.
+
+## Lifecycle
+
+- `init.ts` is the lifecycle entrypoint consumed by `core/connect.ts`.
+- `module.ts` is the thin public API facade — re-exports from `service.ts`.
+- `bootstrap.ts` owns external wiring for `integrate()`.
+- Deferred step (`defer()`): document its use only when this module actually needs non-critical lazy work.
+
+## Inbound Subscriptions
+
+- Document inbound subscriptions here only when this module listens to another module or shared runtime signal.
+
+## Outbound Dependencies
+
+- Document outbound dependencies here when the module depends on shared HTTP, i18n, toast, or another explicit module boundary.
+
+## Internal Structure
+
+- `init.ts`
+- `module.ts`
+- `service.ts`
+- `state.ts`
+- `bootstrap.ts`
+
+## Notes
+
+- Keep `module.ts` thin — only re-exports.
+- Keep `bootstrap.ts` focused on external wiring only.
+- Add stable, worth-preserving notes here only.

@@ -1,0 +1,12 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Domain\{{ Name }};
+
+use Tests\TestCase;
+
+final class {{ Name }}Test extends TestCase
+{
+    // TODO: add unit tests for Domain/{{ Name }} (VO, Policies, Services)
+}
