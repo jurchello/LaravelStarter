@@ -3,45 +3,39 @@
 @section('title', 'Forgot password')
 
 @section('content')
-    <x-site.page
-        data-site-page="forgot-password"
-        data-page-state="ready"
-        data-testid="site-forgot-password-page"
-    >
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <x-site.card padded>
-                <div class="mb-4">
-                    <p class="text-uppercase small fw-semibold text-body-secondary mb-2">Password reset</p>
-                    <h1 class="h3">Forgot your password?</h1>
-                    <p class="text-body-secondary mb-0">Enter your email and we will send you a reset link.</p>
+        <div class="col-md-6 col-lg-5">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="h4 mb-4">Forgot password</h1>
+
+                    @if (session('status'))
+                        <div class="alert alert-success">{{ session('status') }}</div>
+                    @endif
+
+                    @if ($errors->any())
+                        <div class="alert alert-danger">{{ $errors->first() }}</div>
+                    @endif
+
+                    <form method="POST" action="{{ route('password.email') }}">
+                        @csrf
+
+                        <div class="mb-3">
+                            <label class="form-label" for="email">Email</label>
+                            <input class="form-control @error('email') is-invalid @enderror" id="email" name="email" type="email" value="{{ old('email') }}" required autofocus autocomplete="username">
+                            @error('email')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <button class="btn btn-primary w-100" type="submit">Send reset link</button>
+                    </form>
+
+                    <div class="mt-3">
+                        <a href="{{ route('login') }}">Log in</a>
+                    </div>
                 </div>
-
-                <form method="POST" action="{{ route('password.email') }}" data-testid="forgot-password-form">
-                    @csrf
-
-                    <x-site.form-field
-                        for="email"
-                        label="Email"
-                    >
-                        <x-site.input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value="{{ old('email') }}"
-                            required
-                            autofocus
-                            autocomplete="username"
-                            data-testid="forgot-password-email"
-                        />
-                    </x-site.form-field>
-
-                    <x-site.button type="submit" variant="primary" data-testid="forgot-password-submit">
-                        Email password reset link
-                    </x-site.button>
-                </form>
-            </x-site.card>
+            </div>
         </div>
     </div>
-    </x-site.page>
 @endsection
