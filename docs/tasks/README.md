@@ -1,15 +1,15 @@
 # Tasks
 
-Поточні та заплановані задачі.
+Current and planned tasks.
 
-## Статуси
+## Statuses
 
-- `[ ]` — не розпочато
-- `[~]` — в процесі
-- `[x]` — виконано
+- `[ ]` — not started
+- `[~]` — in progress
+- `[x]` — completed
 
-## Файли
+## Files
 
-- `README.md` — правила ведення задач у цьому розділі
-- `sprint-*.md` — задачі по спринтах (за потреби)
-- `backlog.md` — можна додати пізніше, якщо проєкту потрібен окремий загальний беклог
+- `README.md` — rules for maintaining tasks in this section
+- `sprint-*.md` — sprint task lists when needed
+- `backlog.md` — may be added later if the project needs a separate overall backlog

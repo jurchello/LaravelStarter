@@ -48,7 +48,7 @@ When in doubt — read it anyway. It takes less time than undoing a wrong assump
 
 ## Business rules marker
 
-When the user explicitly states that something is a business requirement — phrases like "це вимога", "це бізнесвимога", "це не обговорюється", "так має бути" — the AI must document it directly in the code using the `@business-rule` annotation at the most relevant location (constant, method docblock, class comment, or inline comment). Do not just follow it silently — make it visible in the codebase.
+When the user explicitly states that something is a business requirement — phrases like "this is a requirement", "this is a business requirement", "this is not negotiable", or "it must work this way" — the AI must document it directly in the code using the `@business-rule` annotation at the most relevant location (constant, method docblock, class comment, or inline comment). Do not just follow it silently — make it visible in the codebase.
 
 Example:
 ```php

@@ -1,28 +1,28 @@
 # Architecture
 
-Архітектурні рішення та схеми.
+Architecture decisions and reference structures.
 
-## Файли
+## Files
 
-- [`ddd.md`](./ddd.md) — DDD архітектура: шари, паттерни, TDD підхід, чеклист
+- [`ddd.md`](./ddd.md) — DDD architecture: layers, patterns, TDD approach, checklist
 
 ## ADR (Architecture Decision Records)
 
-Кожне значуще рішення — окремий файл `adr-NNN-назва.md`.
+Each significant decision should be recorded in a separate `adr-NNN-title.md` file.
 
-### Шаблон ADR
+### ADR Template
 
 ```
-# ADR-001: Назва рішення
-**Дата:** YYYY-MM-DD
-**Статус:** proposed / accepted / deprecated
+# ADR-001: Decision Title
+**Date:** YYYY-MM-DD
+**Status:** proposed / accepted / deprecated
 
-## Контекст
-Чому постало це питання?
+## Context
+Why did this question come up?
 
-## Рішення
-Що вирішили зробити?
+## Decision
+What was decided?
 
-## Наслідки
-Що це означає для проекту?
+## Consequences
+What does this mean for the project?
 ```

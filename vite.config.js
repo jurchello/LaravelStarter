@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
-import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
     test: {
@@ -23,7 +22,6 @@ export default defineConfig({
                 'routes/**/*.php',
             ],
         }),
-        tailwindcss(),
     ],
     resolve: {
         alias: {

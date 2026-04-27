@@ -166,10 +166,10 @@ Constructor parameters replace forced state injection:
 
 ```ts
 // BAD
-setI18nState({ locale: 'uk', dictionary: { hello: 'Привіт' } })
+setI18nState({ locale: 'uk', dictionary: { hello: 'Hello' } })
 
 // GOOD — pass initial state via constructor
-const service = new I18nService('uk', { hello: 'Привіт' })
+const service = new I18nService('uk', { hello: 'Hello' })
 ```
 
 ### Rule

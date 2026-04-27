@@ -1,8 +1,8 @@
 # Plans
 
-Плани розробки, роадмепи, технічні плани.
+Development plans, roadmaps, and technical plans.
 
-## Файли
+## Files
 
-- `roadmap.md` — загальний роадмеп продукту
-- `tech-*.md` — технічні плани по конкретних напрямках
+- `roadmap.md` — overall product roadmap
+- `tech-*.md` — technical plans for specific areas

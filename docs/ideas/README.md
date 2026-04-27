@@ -1,13 +1,13 @@
 # Ideas
 
-Ідеї для фіч, покращень, нових напрямків. Сюди без фільтрації — спочатку записати, потім оцінити.
+Ideas for features, improvements, and new directions. Capture them here without filtering first, then evaluate them later.
 
-## Формат запису
+## Entry Format
 
 ```
-## Назва ідеї
-**Дата:** YYYY-MM-DD
-**Пріоритет:** low / medium / high
+## Idea Title
+**Date:** YYYY-MM-DD
+**Priority:** low / medium / high
 
-Опис ідеї...
+Idea description...
 ```

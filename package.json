@@ -22,16 +22,16 @@
         "test:unit:watch": "vitest"
     },
     "devDependencies": {
-        "@tailwindcss/vite": "^4.0.0",
         "@typescript-eslint/eslint-plugin": "^8.57.1",
         "@typescript-eslint/parser": "^8.57.1",
+        "@popperjs/core": "^2.11.8",
         "axios": "^1.11.0",
+        "bootstrap": "^5.3.8",
         "concurrently": "^9.0.1",
         "eslint": "^10.0.3",
         "jsdom": "^29.0.0",
         "laravel-vite-plugin": "^2.0.0",
         "sass": "^1.98.0",
-        "tailwindcss": "^4.0.0",
         "vite": "^7.0.7",
         "vitest": "^4.1.0"
     },

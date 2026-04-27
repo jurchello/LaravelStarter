@@ -3250,7 +3250,7 @@
                     "email": "enunomaduro@gmail.com"
                 }
             ],
-            "description": "It's like Tailwind CSS, but for the console.",
+            "description": "A utility-first console styling package.",
             "keywords": [
                 "cli",
                 "console",
